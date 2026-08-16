@@ -1,0 +1,250 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Исходные файлы">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Файлы заголовков">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Файлы ресурсов">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{f775faa7-8543-4269-b28a-8ac9e726241a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Features">
+      <UniqueIdentifier>{09fd1944-7f9b-406a-ac86-a08be101cace}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{f9795a7a-7258-46a1-a95b-25d399332b7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{8b099da3-2431-467a-acab-8e9c1e6fcce1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils\common">
+      <UniqueIdentifier>{270d5d42-a635-4ba2-9c36-056773c28556}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils\file_system">
+      <UniqueIdentifier>{e5433ca5-de92-4c11-888b-a8d136de4853}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils\history">
+      <UniqueIdentifier>{38c865a5-1dda-4b9e-ae1c-28880fdd5693}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils\process">
+      <UniqueIdentifier>{0e3b9b0f-dc4c-4cbe-b146-63df9817cae0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils\registry">
+      <UniqueIdentifier>{eff80aa3-3eb4-4473-998d-c7cf9413703f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils\startup">
+      <UniqueIdentifier>{e96afd39-c9d3-4a89-8f76-ed7b20e009d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils\unlock">
+      <UniqueIdentifier>{f2e629d4-f6de-460a-bda3-4ac6f14907c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils\accounts">
+      <UniqueIdentifier>{63940d02-aef4-4de1-9852-324f7c5d4d6a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="SYSIM.Win32GUI.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="core\app.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\globals.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\wndproc.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="features\explorer.h">
+      <Filter>Features</Filter>
+    </ClInclude>
+    <ClInclude Include="features\home.h">
+      <Filter>Features</Filter>
+    </ClInclude>
+    <ClInclude Include="features\registry.h">
+      <Filter>Features</Filter>
+    </ClInclude>
+    <ClInclude Include="features\settings.h">
+      <Filter>Features</Filter>
+    </ClInclude>
+    <ClInclude Include="features\taskmgr.h">
+      <Filter>Features</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\widgets.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="NetUtil.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\net_utils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\common\handle_utils.h">
+      <Filter>Utils\common</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\common\logging.h">
+      <Filter>Utils\common</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\common\string_utils.h">
+      <Filter>Utils\common</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\file_system\file_explorer.h">
+      <Filter>Utils\file_system</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\history\system_monitor.h">
+      <Filter>Utils\history</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\registry\registry_editor.h">
+      <Filter>Utils\registry</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\registry\startup_registry.h">
+      <Filter>Utils\registry</Filter>
+    </ClInclude>
+    <ClInclude Include="features\unlock.h">
+      <Filter>Features</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\unlock\unlock_tools.h">
+      <Filter>Utils\unlock</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\file_system\text_file.h">
+      <Filter>Utils\file_system</Filter>
+    </ClInclude>
+    <ClInclude Include="features\notepad.h">
+      <Filter>Features</Filter>
+    </ClInclude>
+    <ClInclude Include="features\monitor.h">
+      <Filter>Features</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\accounts\account_manager.h">
+      <Filter>Utils\accounts</Filter>
+    </ClInclude>
+    <ClInclude Include="features\accounts.h">
+      <Filter>Features</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\process\service_manager.h">
+      <Filter>Utils\process</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\startup\service_edit_dialog.h">
+      <Filter>Utils\startup</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\startup\startup_edit_dialog.h">
+      <Filter>Utils\startup</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\process\offline_service_manager.h">
+      <Filter>Utils\process</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="SYSIM.Win32GUI.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="core\app.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="core\globals.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="core\wndproc.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="features\explorer.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="features\home.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="features\registry.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="features\settings.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="features\taskmgr.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\widgets.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\file_system\file_explorer.cpp">
+      <Filter>Utils\file_system</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\history\system_monitor.cpp">
+      <Filter>Utils\history</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\registry\registry_editor.cpp">
+      <Filter>Utils\registry</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\registry\startup_registry.cpp">
+      <Filter>Utils\registry</Filter>
+    </ClCompile>
+    <ClCompile Include="features\unlock.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\unlock\unlock_tools.cpp">
+      <Filter>Utils\unlock</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\file_system\text_file.cpp">
+      <Filter>Utils\file_system</Filter>
+    </ClCompile>
+    <ClCompile Include="features\notepad.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="features\monitor.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\accounts\account_manager.cpp">
+      <Filter>Utils\accounts</Filter>
+    </ClCompile>
+    <ClCompile Include="features\accounts.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\process\service_manager.cpp">
+      <Filter>Utils\process</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\startup\service_edit_dialog.cpp">
+      <Filter>Utils\startup</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\startup\startup_edit_dialog.cpp">
+      <Filter>Utils\startup</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\process\offline_service_manager.cpp">
+      <Filter>Utils\process</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="SYSIM.Win32GUI.rc">
+      <Filter>Файлы ресурсов</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="app.rc">
+      <Filter>Файлы заголовков</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="small.ico">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="SYSIM.Win32GUI.ico">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="SYSIM.ico">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
