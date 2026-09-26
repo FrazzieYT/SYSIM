@@ -1,0 +1,8 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="src/SYSIM.Win32GUI/SYSIM.Win32GUI.vcxproj" Id="65e6d08e-47b8-4493-863f-de30661c8e4c" />
+</Solution>

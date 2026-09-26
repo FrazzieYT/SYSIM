@@ -1,0 +1,26 @@
+#pragma once
+#include <windows.h>
+#include <gdiplus.h>
+#include <string>
+using namespace Gdiplus;
+
+void DrawExplorerContent(Graphics& g, const RectF& contentArea, Font& contentFont);
+bool OnExplorerClick(int x, int y, const RectF& contentArea);
+bool OnExplorerDoubleClick(int x, int y, const RectF& contentArea);
+bool OnExplorerRightClick(int x, int y, const RectF& contentArea);
+bool ExplorerProcessKey(UINT msg, WPARAM wParam, LPARAM lParam);
+
+void OpenPathInExplorer(const std::wstring& filePath);
+
+// Address bar inline editing
+bool IsExplorerAddressBarEditing();
+bool ExplorerAddressBarProcessKey(UINT msg, WPARAM wParam, LPARAM lParam);
+void CancelExplorerAddressBarEdit();
+
+// Manual column resizing
+bool ExplorerLeftButtonDown(int x, int y, const RectF& contentArea);
+bool ExplorerMouseMove(int x, int y, const RectF& contentArea);
+bool ExplorerLeftButtonUp();
+
+// Scrollbar
+bool ExplorerMouseWheel(int delta, const RectF& contentArea);
