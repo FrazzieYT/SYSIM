@@ -26,8 +26,7 @@
 #endif
 
 namespace ActivityMonitor {
-
-    // ==================== ГЛОБАЛЬНОЕ СОСТОЯНИЕ ====================
+    // ГЛОБАЛЬНОЕ СОСТОЯНИЕ
     static CRITICAL_SECTION g_cs;
     static bool g_csInit = false;
     static std::vector<Event> g_events;
@@ -47,7 +46,7 @@ namespace ActivityMonitor {
     static CRITICAL_SECTION g_trackCs;
     static bool g_trackCsInit = false;
 
-    // ==================== СИНХРОНИЗАЦИЯ ====================
+    // СИНХРОНИЗАЦИЯ
     static void Lock() { if (g_csInit) EnterCriticalSection(&g_cs); }
     static void Unlock() { if (g_csInit) LeaveCriticalSection(&g_cs); }
     static void EnsureTrackCs() {
@@ -67,7 +66,7 @@ namespace ActivityMonitor {
     }
     static bool WantStop() { return WaitForSingleObject(g_stopEvent, 0) == WAIT_OBJECT_0; }
 
-    // ==================== PEB СТРУКТУРЫ (ДО использования) ====================
+    // PEB СТРУКТУРЫ
     typedef NTSTATUS(NTAPI* pfnNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
 
     typedef struct _RTL_UP_CUSTOM {
@@ -86,7 +85,7 @@ namespace ActivityMonitor {
         RTL_UP_CUSTOM* ProcessParameters;
     } PEB_CUSTOM;
 
-    // ==================== СЕТЕВЫЕ КЭШИ (ДО использования) ====================
+    // СЕТЕВЫЕ КЭШИ
     static std::mutex g_dnsMtx;
     static std::unordered_map<std::wstring, std::wstring> g_dnsCache;
     static std::unordered_map<DWORD, std::wstring> g_procCache;
@@ -167,7 +166,7 @@ namespace ActivityMonitor {
         size_t operator()(const ConnKey& k) const { return std::hash<DWORD>()(k.pid) ^ (std::hash<DWORD>()(k.ip) << 1) ^ k.port; }
     };
 
-    // ==================== PUSHEVENT ====================
+    // PUSHEVENT
     static void PushEvent(EventType type, const std::wstring& path, const std::wstring& extra,
         bool suspicious = false, DWORD pid = 0, DWORD parentPid = 0) {
         LockTrack();
@@ -196,7 +195,7 @@ namespace ActivityMonitor {
         Unlock();
     }
 
-    // ==================== УТИЛИТЫ ====================
+    // УТИЛИТЫ
     const wchar_t* TypeToString(EventType t) {
         switch (t) {
         case EventType::FileCreated:     return L"Файл +";
@@ -241,7 +240,7 @@ namespace ActivityMonitor {
         return st;
     }
 
-    // ==================== FILES ====================
+    // FILES
     static bool IsNoisyPath(const std::wstring& p) {
         static const wchar_t* noise[] = {
             L"\\$Recycle.Bin", L"\\pagefile.sys", L"\\swapfile.sys", L"\\hiberfil.sys",
@@ -336,7 +335,7 @@ namespace ActivityMonitor {
         }
     }
 
-    // ==================== REGISTRY ====================
+    // REGISTRY
     struct RegTarget { HKEY root; const wchar_t* subKey; bool suspicious; };
     static const RegTarget kRegTargets[] = {
         { HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true },
@@ -450,7 +449,7 @@ namespace ActivityMonitor {
         return 0;
     }
 
-    // ==================== PROCESSES ====================
+    // PROCESSES
     static std::wstring ReadCommandLineFromPEB(HANDLE hProc) {
         static auto NtQIP = (pfnNtQueryInformationProcess)
             GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtQueryInformationProcess");
@@ -536,7 +535,7 @@ namespace ActivityMonitor {
         return 0;
     }
 
-    // ==================== SERVICES ====================
+    // SERVICES
     static DWORD WINAPI ServiceWatchThread(LPVOID) {
         std::map<std::wstring, DWORD> prev;
         bool first = true;
@@ -582,7 +581,7 @@ namespace ActivityMonitor {
         return 0;
     }
 
-    // ==================== NETWORK ====================
+    // NETWORK
     static DWORD WINAPI NetWatchThread(LPVOID) {
         std::unordered_map<ConnKey, ULONGLONG, ConnKeyHash> cache;
         ULONGLONG lastProcCleanup = GetTickCount64();
@@ -651,7 +650,7 @@ namespace ActivityMonitor {
         return 0;
     }
 
-    // ==================== SYSMON ====================
+    // SYSMON
     static std::wstring ExtractXmlValue(const std::wstring& xml, const std::wstring& tagName) {
         std::wstring search = L"<Data Name=\"" + tagName + L"\">";
         size_t start = xml.find(search);
@@ -744,7 +743,7 @@ namespace ActivityMonitor {
         g_sysmonAvailable = (g_sysmonSubscription != nullptr);
     }
 
-    // ==================== TRACKING API ====================
+    // TRACKING API
     void StartTrackingProcess(DWORD rootPid, const std::wstring& rootName) {
         LockTrack();
         g_rootTrackedPid = rootPid;
@@ -833,7 +832,7 @@ namespace ActivityMonitor {
     void SetSysmonXPathFilter(const std::wstring& xpath) { g_sysmonXPath = xpath; }
     std::wstring GetSysmonXPathFilter() { return g_sysmonXPath; }
 
-    // ==================== CONTROLS ====================
+    // CONTROLS
     bool IsRunning() { return g_running; }
 
     void Start(bool files, bool registry, bool processes, bool services, bool network, bool useSysmon) {
@@ -912,4 +911,4 @@ namespace ActivityMonitor {
         return true;
     }
 
-} // namespace ActivityMonitor
+}

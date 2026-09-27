@@ -20,7 +20,7 @@ static std::vector<std::wstring> g_explorerForwardStack;
 static bool g_navBackEnabled = false;
 static bool g_navForwardEnabled = false;
 
-// === isInlineEditing ===
+// isInlineEditing
 static bool g_addressBarEditing = false;
 static std::wstring g_addressBarText;
 static int g_addressBarCaretPos = 0;
@@ -44,7 +44,7 @@ enum ExplorerMenuCommand {
     IDM_EXPLORER_OPEN_CMD
 };
 
-// === UI Layout ===
+// UI Layout
 static const float EX_LEFT_MARGIN = 8.0f;
 static const float EX_ADDR_TOP = 4.0f;
 static const float EX_ADDR_HEIGHT = 34.0f;
@@ -61,7 +61,7 @@ static const float EX_MIN_NAME_WIDTH = 110.0f;
 static const float EX_MIN_SIZE_WIDTH = 70.0f;
 static const float EX_MIN_DATE_WIDTH = 120.0f;
 
-// === SCROLLBAR STATE ===
+// SCROLLBAR STATE
 static const float SCROLLBAR_W = 12.0f;
 static const float SCROLLBAR_MIN_THUMB = 24.0f;
 static RectF g_scrollTrackRect;   // Полный трек скроллбара
@@ -70,7 +70,7 @@ static bool g_scrollDragging = false;
 static float g_scrollDragStartY = 0.0f;
 static int g_scrollDragStartOffset = 0;
 
-// === Helper functions ===
+// Helper functions
 static bool HitTestRect(const RectF& rect, float x, float y) {
     return x >= rect.X &&
         x < rect.X + rect.Width &&
@@ -245,7 +245,7 @@ void OpenPathInExplorer(const std::wstring& filePath) {
     InvalidateRect(App::Instance()->GetHWND(), nullptr, TRUE);
 }
 
-// === Address bar: inline editing ===
+// Address bar: inline editing
 static void StartAddressBarEdit() {
     g_addressBarEditing = true;
     g_addressBarText = g_explorerPath;
@@ -309,7 +309,7 @@ bool ExplorerAddressBarProcessKey(UINT msg, WPARAM wParam, LPARAM lParam) {
     return false;
 }
 
-// === Column resizing ===
+// Column resizing
 bool ExplorerLeftButtonDown(int x, int y, const RectF& contentArea) {
     float fx = static_cast<float>(x);
     float fy = static_cast<float>(y);
@@ -422,7 +422,7 @@ bool ExplorerLeftButtonUp() {
     return true;
 }
 
-// === Скролл колёсиком ===
+// Скролл колёсиком
 bool ExplorerMouseWheel(int delta, const RectF& contentArea) {
     (void)contentArea;
     if (g_maxScroll[2] <= 0) return false;
@@ -434,7 +434,7 @@ bool ExplorerMouseWheel(int delta, const RectF& contentArea) {
     return true;
 }
 
-// === File list helper functions ===
+// File list helper functions
 static int GetExplorerRowAt(int x, int y, const RectF& contentArea) {
     float yStart = contentArea.Y + EX_TOP_MARGIN + 30.0f - g_scrollOffset[2];
     float xStart = contentArea.X + EX_LEFT_MARGIN + 2.0f;
@@ -660,7 +660,7 @@ static bool InputBox(HWND parent, const wchar_t* title, const wchar_t* prompt, s
     return state.ok;
 }
 
-// === Context menu actions ===
+// Context menu actions
 static void OpenSelectedItem(bool runAsAdmin) {
     int index = g_explorerSelectedIndex;
     if (!IsNormalSelectedIndex(index)) return;
@@ -921,7 +921,7 @@ static void LoadExplorerSig(int index) {
     item.sigChecked = true;
 }
 
-// === Drawing ===
+// Drawing
 void DrawExplorerContent(Graphics& g, const RectF& contentArea, Font& contentFont) {
     (void)contentFont;
     static std::wstring lastPath;
@@ -980,7 +980,7 @@ void DrawExplorerContent(Graphics& g, const RectF& contentArea, Font& contentFon
     cellFormat.SetTrimming(StringTrimmingEllipsisCharacter);
     cellFormat.SetFormatFlags(StringFormatFlagsNoWrap);
 
-    // === Address Bar ===
+    // Address Bar
     const float navButtonW = 28.0f;
     const float navButtonH = 22.0f;
     const float navGap = 6.0f;
@@ -1045,7 +1045,7 @@ void DrawExplorerContent(Graphics& g, const RectF& contentArea, Font& contentFon
         g.DrawString((L"Путь: " + g_explorerPath).c_str(), -1, &addressFont, addressTextRect, &addressFormat, &mutedBrush);
     }
 
-    // === File list ===
+    // File list
     RectF listRect = GetListRect(contentArea);
     float nameColWidth = 0.0f, sizeColWidth = 0.0f;
     GetExplorerColumnWidths(listRect, nameColWidth, sizeColWidth);
@@ -1172,7 +1172,7 @@ void DrawExplorerContent(Graphics& g, const RectF& contentArea, Font& contentFon
     }
     g.ResetClip();
 
-    // === СКРОЛЛБАР ===
+    // СКРОЛЛБАР
     float sbX = listRect.X + listRect.Width - SCROLLBAR_W - 1.0f;
     float sbY = listRect.Y + 29.0f;
     float sbH = listRect.Height - 30.0f;
@@ -1204,7 +1204,7 @@ void DrawExplorerContent(Graphics& g, const RectF& contentArea, Font& contentFon
     g.DrawLine(&sbLine, sbX, listRect.Y, sbX, listRect.Y + listRect.Height);
 }
 
-// === Clicks ===
+// Clicks
 bool OnExplorerClick(int x, int y, const RectF& contentArea) {
     float fx = static_cast<float>(x);
     float fy = static_cast<float>(y);

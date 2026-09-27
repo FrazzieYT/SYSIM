@@ -488,17 +488,17 @@ bool PrepareHealedAndInjectedWinRE(const std::wstring& workDir,
             const std::wstring iniPath = mountDir + L"\\Windows\\System32\\winpeshl.ini";
             std::wstring iniContent = L"[LaunchApps]\r\n";
             iniContent += L"X:\\Windows\\System32\\" + exeNameInImage + L"\r\n";
-
+            
             HANDLE hIni = CreateFileW(iniPath.c_str(), GENERIC_WRITE, 0,
                 nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
             if (hIni != INVALID_HANDLE_VALUE) {
                 DWORD written = 0;
-                int utf8Size = WideCharToMultiByte(CP_UTF8, 0, iniContent.c_str(),
-                    (int)iniContent.size(), nullptr, 0, nullptr, nullptr);
-                std::vector<char> utf8Buf(utf8Size);
-                WideCharToMultiByte(CP_UTF8, 0, iniContent.c_str(), (int)iniContent.size(),
-                    utf8Buf.data(), utf8Size, nullptr, nullptr);
-                WriteFile(hIni, utf8Buf.data(), utf8Size, &written, nullptr);
+                const wchar_t bom = 0xFEFF;
+                WriteFile(hIni, &bom, sizeof(bom), &written, nullptr);
+
+                WriteFile(hIni, iniContent.c_str(),
+                    static_cast<DWORD>(iniContent.size() * sizeof(wchar_t)),
+                    &written, nullptr);
                 CloseHandle(hIni);
                 success = (written > 0);
             }

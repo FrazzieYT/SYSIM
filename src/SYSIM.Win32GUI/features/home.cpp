@@ -6,6 +6,7 @@
 #include "features/taskmgr.h"
 #include "utils/unlock/unlock_tools.h"
 #include "utils/accounts/account_manager.h"
+#include "utils/file_system/winre_manager.h"
 #include "utils/registry/startup_registry.h"
 #include <windows.h>
 #include <windowsx.h>
@@ -35,7 +36,7 @@
 #define SHTDN_REASON_MINOR_OTHER 0x00000000
 #endif
 
-// === Запуск ===
+// Запуск
 static bool Launch(const std::wstring& path, bool asAdmin = false) {
     if (IsProcessLaunchBlocked(App::Instance()->GetHWND())) return false;
     DWORD attrs = GetFileAttributesW(path.c_str());
@@ -133,7 +134,7 @@ static bool OpenWinRARInstaller() {
     return true;
 }
 
-// === Кнопки ===
+// Кнопки
 struct HomeButton {
     RectF rect;
     std::wstring text;
@@ -142,12 +143,12 @@ struct HomeButton {
 static std::vector<HomeButton> g_homeButtons;
 static int g_winPeCategory = 0;
 
-// === Inline Run ===
+// Inline Run
 static std::wstring g_runText;
 static bool g_runActive = false;
 static int  g_runCaretPos = 0;
 
-// === Утилиты ===
+// Утилиты
 static void HomeRedraw() {
     InvalidateRect(App::Instance()->GetHWND(), nullptr, TRUE);
 }
@@ -157,7 +158,7 @@ static bool HomeHitRect(const RectF& rect, float x, float y) {
         y >= rect.Y && y < rect.Y + rect.Height;
 }
 
-// === Питание ===
+// Питание
 static bool HomeEnableShutdownPrivilege() {
     HANDLE token = nullptr;
     if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &token))
@@ -1569,7 +1570,7 @@ static void HomeShowHelp() {
         L"Справка", MB_OK | MB_ICONINFORMATION);
 }
 
-// === Run-строка ===
+// Run-строка
 bool IsHomeRunEditing() { return g_runActive; }
 
 void CancelHomeRunEdit() {
@@ -1705,7 +1706,7 @@ bool OnHomeRunKey(UINT msg, WPARAM wParam, LPARAM lParam) {
     return false;
 }
 
-// === Инициализация кнопок ===
+// Инициализация кнопок
 void InitHomeButtons() {
     g_homeButtons.clear();
 
@@ -1775,12 +1776,13 @@ void InitHomeButtons() {
     g_homeButtons.push_back({ RectF(), L"Сброс пароля" });
     g_homeButtons.push_back({ RectF(), L"Удаление дисков" });
     g_homeButtons.push_back({ RectF(), L"Менеджер WinRE" });
+    g_homeButtons.push_back({ RectF(), L"Восстановление WinRE" });
     g_homeButtons.push_back({ RectF(), L"Восстановить политики Windows" });
     g_homeButtons.push_back({ RectF(), L"Инструменты BSOD" });
     g_homeButtons.push_back({ RectF(), L"Авто-замена cmdline + Shell" });
 }
 
-// === Отрисовка ===
+// Отрисовка
 void DrawHomeContent(Graphics& g, const RectF& contentArea, Font& contentFont) {
     (void)contentFont;
 
@@ -1801,7 +1803,7 @@ void DrawHomeContent(Graphics& g, const RectF& contentArea, Font& contentFont) {
     SolidBrush buttonBg(COLOR_BUTTON_BG);
     Pen borderPen(COLOR_BORDER, 1.0f);
 
-    // ===== Область для кнопок (сверху) =====
+    // Область для кнопок (сверху)
     float listTop = contentArea.Y + topMargin;
     float listBottom = contentArea.Y + contentArea.Height - bottomMargin;
     float listH = listBottom - listTop;
@@ -1844,7 +1846,7 @@ void DrawHomeContent(Graphics& g, const RectF& contentArea, Font& contentFont) {
 
 }
 
-// === Клики ===
+// Клики
 bool OnHomeClick(int x, int y, const RectF& contentArea) {
     (void)contentArea;
     if (g_homeButtons.empty()) InitHomeButtons();
@@ -1896,6 +1898,7 @@ bool OnHomeClick(int x, int y, const RectF& contentArea) {
                 return true;
             }
             if (t == L"Менеджер WinRE") { HomeShowWinREManager(); return true; }
+            if (t == L"Восстановление WinRE") { ShowReplaceWinREDialog(App::Instance()->GetHWND()); return true; }
             if (t == L"Восстановить политики Windows") { HomeShowPolicyRecoveryMenu(); return true; }
             if (t == L"Инструменты BSOD") { HomeShowBsodTools(); return true; }
             if (t == L"Разблокировка") { HomeOpenUnlock(); return true; }
@@ -1973,6 +1976,7 @@ bool OnHomeClick(int x, int y, const RectF& contentArea) {
         if (t == L"Удобный запуск") { RunCommand(L"msconfig.exe"); return true; }
         if (t == L"mbrRE") { RunCommand(L"bcdedit.exe /enum all"); return true; }
         if (t == L"Менеджер WinRE") { HomeShowWinREManager(); return true; }
+        if (t == L"Восстановление WinRE") { ShowReplaceWinREDialog(App::Instance()->GetHWND()); return true; }
         if (t == L"Восстановить политики Windows") { HomeShowPolicyRecoveryMenu(); return true; }
         if (t == L"Инструменты BSOD") { HomeShowBsodTools(); return true; }
 

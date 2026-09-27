@@ -12,7 +12,7 @@
 
 using namespace Gdiplus;
 
-// ===== Состояние настроек =====
+// Состояние настроек
 static bool g_defaultsApplied = false;
 
 // Положение панели вкладок: 0=Верх, 1=Лево, 2=Право, 3=Низ
@@ -98,7 +98,7 @@ static void SyncOfflineDriveHint() {
     UnlockTools::SetOfflineDriveHint(preferred);
 }
 
-// ===== Утилиты =====
+// Утилиты
 static bool SettingsHitRect(const RectF& rect, float x, float y) {
     return x >= rect.X &&
         x < rect.X + rect.Width &&
@@ -380,7 +380,7 @@ static void EnsureDrivesInitialized() {
     g_settingsDrivesInitialized = true;
 }
 
-// ===== Публичные геттеры =====
+// Публичные геттеры
 int GetSettingsTabPosition() {
     return g_settingsTabPosition;
 }
@@ -405,7 +405,7 @@ std::vector<std::wstring> GetMonitoredDrives() {
     return result;
 }
 
-// ===== Применение при старте =====
+// Применение при старте
 void ApplyDefaultSettings() {
     LoadSettingsFromRegistry();
     EnsureDrivesInitialized();
@@ -423,7 +423,7 @@ static void RebuildDrivesForCurrentEnvironment() {
     EnsureDrivesInitialized();
 }
 
-// === Рисование одного пункта списка ===
+// Рисование одного пункта списка
 static void DrawListItem(
     Graphics& g, const RectF& r, const wchar_t* label,
     bool active, Font& font,
@@ -443,7 +443,7 @@ static void DrawListItem(
     g.DrawString(label, -1, &font, txt, &fmt, active ? &textBrush : &mutedBrush);
 }
 
-// ===== Отрисовка =====
+// Отрисовка
 void DrawSettingsContent(Graphics& g, const RectF& contentArea, Font& contentFont) {
     (void)contentFont;
 
@@ -480,7 +480,7 @@ void DrawSettingsContent(Graphics& g, const RectF& contentArea, Font& contentFon
     RectF titleRect(x, top, titleW, 30.0f);
     g.DrawString(L"Настройки", -1, &titleFont, titleRect, &leftFormat, &textBrush);
 
-    // === Две колонки: Диск | Панель вкладок ===
+    // Две колонки: Диск | Панель вкладок
     float colsTop = top + 52.0f;
     const float colGap = 24.0f;
     const float colW = 220.0f;
@@ -521,7 +521,7 @@ void DrawSettingsContent(Graphics& g, const RectF& contentArea, Font& contentFon
         itemY += itemH + itemGap;
     }
 
-    // ---- Правая колонка: Панель вкладок ----
+    // Правая колонка: Панель вкладок
     RectF tabPosTitle(rightColX, colsTop, colW, 24.0f);
     g.DrawString(L"Панель вкладок:", -1, &itemFont, tabPosTitle, &leftFormat, &textBrush);
 
@@ -538,7 +538,7 @@ void DrawSettingsContent(Graphics& g, const RectF& contentArea, Font& contentFon
         tabY += itemH + itemGap;
     }
 
-    // ---- Экстренный режим шрифтов ----
+    // Экстренный режим шрифтов
     RectF fontTitle(rightColX, tabY + 16.0f, colW, 24.0f);
     g.DrawString(L"Шрифт:", -1, &itemFont, fontTitle, &leftFormat, &textBrush);
 
@@ -554,7 +554,7 @@ void DrawSettingsContent(Graphics& g, const RectF& contentArea, Font& contentFon
         itemFont, textBrush, mutedBrush, controlBg, activeBg, borderPen);
 }
 
-// ===== Клики =====
+// Клики
 bool OnSettingsClick(int x, int y, const RectF& contentArea) {
     (void)contentArea;
     float fx = static_cast<float>(x);

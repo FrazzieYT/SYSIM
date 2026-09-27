@@ -365,7 +365,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) 
         Font contentFont(&ff, 12.0f, FontStyleRegular, UnitPixel);
         Font iconFont(&ff, 14.0f, FontStyleRegular, UnitPixel);
 
-        // === Шапка и табы ===
+        // Шапка и табы
         int tabPos = GetSettingsTabPosition();
         bool vertical = IsVerticalTabs(tabPos);
 
@@ -373,7 +373,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) 
         SolidBrush headerBrush(COLOR_HEADER_BG);
         g.FillRectangle(&headerBrush, headerRect);
 
-        // === Управление окном ===
+        // Управление окном
         float btnSize = 42.0f;
         const float BTN_COUNT = 2.0f;
         RectF btnArea = GetWindowButtonsArea(clientRect, tabPos, btnSize, BTN_COUNT);
@@ -405,7 +405,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) 
         DrawWindowButton(g_tabBtnMinimize, g_tabBtnMinimizeHover, L"─");
         DrawWindowButton(g_tabBtnClose, g_tabBtnCloseHover, L"✕", true);
 
-        // ===== Табы =====
+        // Табы
         RectF tabsArea;
         if (!vertical) {
             tabsArea = RectF(headerRect.X + 8.0f, headerRect.Y,
@@ -466,7 +466,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) 
             }
         }
         else {
-            // === Вертикальный сайдбар ===
+            // Вертикальный сайдбар
             const Color ITEM_HOVER(255, 52, 52, 56);
             const Color ITEM_ACTIVE(255, 0, 120, 212);
 
@@ -563,7 +563,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) 
                 -1, &sideSmall, uRightsR, &lf, &uRightsBrush);
         }
 
-        // === Разделитель шапки и контента ===
+        // Разделитель шапки и контента
         Pen separatorPen(COLOR_BORDER, 1.0f);
         if (tabPos == 0) {
             g.DrawLine(&separatorPen, 0.0f, HEADER_SIZE, clientRect.Width, HEADER_SIZE);
@@ -578,7 +578,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) 
             g.DrawLine(&separatorPen, clientRect.Width - SIDEBAR_W, 0.0f, clientRect.Width - SIDEBAR_W, clientRect.Height);
         }
 
-        // ===== Контент =====
+        // Контент
         RectF contentArea = GetContentRect(clientRect, tabPos);
 
         switch (g_activeMainTab) {

@@ -8,7 +8,7 @@
 
 using namespace Gdiplus;
 
-// ===== НАВИГАЦИЯ =====
+// НАВИГАЦИЯ
 struct SystemKeybindEntry {
     std::wstring group;
     std::wstring keys;
@@ -30,11 +30,11 @@ extern int g_dragTabIndex;
 extern bool g_subTabsExpanded;
 extern RectF g_subTabsToggleRect;
 
-// ===== ГОРИЗОНТАЛЬНЫЕ ТАБЫ =====
+// ГОРИЗОНТАЛЬНЫЕ ТАБЫ
 extern RectF g_horizontalTabRects[20];
 extern int g_horizontalTabHover;
 
-// ===== СКРОЛЛ КОНТЕНТА =====
+// СКРОЛЛ КОНТЕНТА
 extern int g_scrollOffset[20];
 extern int g_maxScroll[20];
 extern int g_scrollBarWidth;
@@ -42,7 +42,7 @@ extern bool g_scrollBarDragging;
 extern int g_scrollBarDragStartY;
 extern int g_scrollBarDragStartOffset;
 
-// ===== КНОПКИ УПРАВЛЕНИЯ ОКНОМ =====
+// КНОПКИ УПРАВЛЕНИЯ ОКНОМ
 extern RectF g_tabBtnSettings;
 extern RectF g_tabBtnMinimize;
 extern RectF g_tabBtnClose;
@@ -50,14 +50,14 @@ extern bool g_tabBtnSettingsHover;
 extern bool g_tabBtnMinimizeHover;
 extern bool g_tabBtnCloseHover;
 
-// ===== ДОПОЛНИТЕЛЬНЫЕ КНОПКИ =====
+// ДОПОЛНИТЕЛЬНЫЕ КНОПКИ
 extern RectF g_settingsButtonRect;
 extern RectF g_notepadButtonRect;
 
 extern std::array<Gdiplus::RectF, 20> g_sidebarTabRects;
 extern std::array<Gdiplus::RectF, 20> g_subTabRects;
 
-// ===== ТЕМА =====
+// ТЕМА
 extern std::wstring g_embeddedFontFamilyName;
 extern std::wstring g_fontFamilyName;
 extern bool g_useSystemFonts;
@@ -71,18 +71,18 @@ extern const Color COLOR_TEXT_MUTED;
 extern const Color COLOR_BORDER;
 extern const Color COLOR_BUTTON_BG;
 
-// ===== ЗАЩИТА ЗАПУСКА =====
+// ЗАЩИТА ЗАПУСКА
 extern bool g_blockProcessLaunches;
 extern bool g_blockSystemHotkeys;
 extern bool g_keepWindowOnTop;
 bool IsProcessLaunchBlocked(HWND owner);
 void ApplySystemHotkeyProtection();
 
-// ===== ПРОВОДНИК =====
+// ПРОВОДНИК
 extern std::wstring g_explorerPath;
 extern int g_explorerSelectedIndex;
 extern std::vector<int> g_explorerSelectedIndices;
 extern std::vector<FileExplorer::FileItem> g_explorerItems;
 
-// ===== LAYOUT =====
+// LAYOUT
 extern bool g_useVerticalLayout;

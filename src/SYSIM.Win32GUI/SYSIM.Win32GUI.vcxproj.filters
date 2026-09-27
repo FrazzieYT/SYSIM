@@ -150,6 +150,9 @@
     <ClInclude Include="utils\process\offline_service_manager.h">
       <Filter>Utils\process</Filter>
     </ClInclude>
+    <ClInclude Include="utils\file_system\winre_manager.h">
+      <Filter>Utils\file_system</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SYSIM.Win32GUI.cpp">
@@ -226,6 +229,9 @@
     </ClCompile>
     <ClCompile Include="utils\process\offline_service_manager.cpp">
       <Filter>Utils\process</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\file_system\winre_manager.cpp">
+      <Filter>Utils\file_system</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

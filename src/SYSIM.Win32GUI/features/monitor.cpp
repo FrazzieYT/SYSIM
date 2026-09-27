@@ -49,7 +49,7 @@ static int   g_dragStartScroll = 0;
 
 enum { MC_COPY_LINE = 1, MC_COPY_PATH, MC_COPY_ALL, MC_TRACK_PROCESS };
 
-// ==================== COLORS ====================
+// COLORS
 static Color ColorForType(ActivityMonitor::EventType t) {
     using T = ActivityMonitor::EventType;
     switch (t) {
@@ -68,7 +68,7 @@ static Color ColorForType(ActivityMonitor::EventType t) {
     return CLR_TEXT_DIM;
 }
 
-// ==================== HELPERS ====================
+// HELPERS
 static bool Hit(const RectF& r, float x, float y) {
     return x >= r.X && x < r.X + r.Width && y >= r.Y && y < r.Y + r.Height;
 }
@@ -96,7 +96,7 @@ static int RowAt(int x, int y) {
     return idx;
 }
 
-// ==================== DRAW PRIMITIVES ====================
+// DRAW PRIMITIVES
 static void DrawRoundedRect(Graphics& g, const RectF& r, const Color& fill, float radius = 5.0f) {
     SolidBrush brush(fill);
     g.FillRectangle(&brush, RectF(r.X + radius, r.Y, r.Width - 2 * radius, r.Height));
@@ -141,7 +141,7 @@ static void DrawLabel(Graphics& g, const wchar_t* text, float x, float y, Font& 
     g.DrawString(text, -1, &font, PointF(x, y), &brush);
 }
 
-// ==================== SCROLLBAR ====================
+// SCROLLBAR
 static bool GetTrackRect(const RectF& listRect, RectF& outTrack) {
     if (g_lastTotalH <= g_lastListH) return false;
     float trackW = 6.0f;
@@ -179,7 +179,7 @@ static void DrawScrollBar(Graphics& g, const RectF& listRect, float totalH, floa
     g.FillRectangle(&thumbBrush, thumbDraw);
 }
 
-// ==================== PICK + RUN + AUTO-TRACK ====================
+// PICK + RUN + AUTO-TRACK
 static bool PickRunAndTrack() {
     if (IsProcessLaunchBlocked(App::Instance()->GetHWND())) return false;
     wchar_t file[MAX_PATH] = L"";
@@ -214,7 +214,7 @@ static bool PickRunAndTrack() {
     return true;
 }
 
-// ==================== DRAW ====================
+// DRAW
 void DrawMonitorContent(Graphics& g, const RectF& contentArea, Font& contentFont) {
     (void)contentFont;
     SolidBrush bgBrush(CLR_BG);
@@ -235,7 +235,7 @@ void DrawMonitorContent(Graphics& g, const RectF& contentArea, Font& contentFont
     const bool hasSysmon = ActivityMonitor::IsSysmonAvailable();
     const auto stats = ActivityMonitor::GetStats();
 
-    // === Строка 1: Кнопки ===
+    // Строка 1: Кнопки
     float btnY = y;
     float gap = 6.0f;
     float bx = x;
@@ -254,7 +254,7 @@ void DrawMonitorContent(Graphics& g, const RectF& contentArea, Font& contentFont
     DrawButton(g, g_btnSave, L"Сохранить", fontSmall, CLR_BUTTON, CLR_TEXT, false, g_hoverControl == 4);
     DrawButton(g, g_btnCopy, L"Копировать", fontSmall, CLR_BUTTON, CLR_TEXT, false, g_hoverControl == 5);
 
-    // === Строка 2: Пиллы + счётчики + статус ===
+    // Строка 2: Пиллы + счётчики + статус
     float pillY = btnY + BTN_H + 8.0f;
     float px = x;
     auto placePill = [&](RectF& r, bool active, const wchar_t* label, float w, int id) {
@@ -278,7 +278,7 @@ void DrawMonitorContent(Graphics& g, const RectF& contentArea, Font& contentFont
         listY += 14.0f;
     }
 
-    // === Строка 4: Список ===
+    // Строка 4: Список
     float listH = contentArea.Y + contentArea.Height - listY - PAD;
     if (listH < 30.0f) return;
 
@@ -353,7 +353,7 @@ void DrawMonitorContent(Graphics& g, const RectF& contentArea, Font& contentFont
     }
 }
 
-// ==================== INPUT ====================
+// INPUT
 bool OnMonitorClick(int x, int y, const RectF& contentArea) {
     (void)contentArea;
     float fx = (float)x, fy = (float)y;
@@ -499,7 +499,7 @@ bool OnMonitorDblClick(int x, int y, const RectF& contentArea) {
     return false;
 }
 
-// ==================== SCROLL INPUT ====================
+// SCROLL INPUT
 bool OnMonitorWheel(int x, int y, int delta) {
     float fx = (float)x, fy = (float)y;
     if (!Hit(g_listRect, fx, fy)) return false;

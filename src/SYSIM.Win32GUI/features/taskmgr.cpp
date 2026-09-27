@@ -145,7 +145,7 @@ static std::vector<DriverDisplayInfo> g_drivers;
 static bool g_servicesOffline = false;
 static bool g_driversOffline = false;
 
-// === Фоновый воркер проверки подписей драйверов ===
+// Фоновый воркер проверки подписей драйверов
 static std::atomic<bool> g_sigWorkerRunning{ false };
 static std::atomic<bool> g_sigWorkerStop{ false };
 static HANDLE            g_sigWorkerThread = nullptr;
@@ -155,7 +155,7 @@ static bool              g_driversLockInit = false;
 static void StartSigWorker(HWND hwnd); // forward decl
 static void StopSigWorker();          // forward decl
 
-// === Фоновый воркер обновления списка процессов ===
+// Фоновый воркер обновления списка процессов
 static std::atomic<bool> g_procWorkerRunning{ false };
 static std::atomic<bool> g_procWorkerStop{ false };
 static HANDLE            g_procWorkerThread = nullptr;
@@ -430,7 +430,7 @@ static void RefreshProcessList() {
         StartProcWorker(App::Instance()->GetHWND());
 }
 
-// === WinRE offline startup ===
+// WinRE offline startup
 static void RefreshStartupList();   // forward decl (нужен для fallback в *Offline)
 
 struct OfflineMounts {
@@ -452,7 +452,7 @@ static void EnsureOfflineStartupMounts() {
         UnlockTools::GetOfflineDriveHint());
     if (winPath.empty()) return;
 
-    // --- SOFTWARE ---
+    // SOFTWARE
     const wchar_t* softMount = L"OfflineSoftware";
     std::wstring softFile = winPath + L"\\System32\\config\\SOFTWARE";
     if (RegistryEditor::LoadHive(HKEY_LOCAL_MACHINE, softMount, softFile)) {
@@ -460,7 +460,7 @@ static void EnsureOfflineStartupMounts() {
         g_offlineMounts.ownedMounts.push_back(softMount);
     }
 
-    // --- SYSTEM ---
+    // SYSTEM
     const wchar_t* sysMount = L"OfflineSystem";
     std::wstring sysFile = winPath + L"\\System32\\config\\SYSTEM";
     if (RegistryEditor::LoadHive(HKEY_LOCAL_MACHINE, sysMount, sysFile)) {
@@ -468,7 +468,7 @@ static void EnsureOfflineStartupMounts() {
         g_offlineMounts.ownedMounts.push_back(sysMount);
     }
 
-    // --- NTUSER.DAT каждого профиля ---
+    // NTUSER.DAT каждого профиля
     std::wstring drive = winPath.substr(0, 2);
     std::wstring usersDir = drive + L"\\Users";
 
@@ -630,7 +630,7 @@ void TaskManagerShutdown() {
     }
 }
 
-// === Фоновый воркер проверки подписей ===
+// Фоновый воркер проверки подписей
 static unsigned __stdcall SigWorkerProc(void* p);
 
 static void StartSigWorker(HWND hwnd) {
@@ -660,7 +660,7 @@ static void StopSigWorker() {
     g_sigWorkerRunning.store(false);
 }
 
-// === Быстрые эвристики процесса ===
+// Быстрые эвристики процесса
 // Vетаданные (путь, имя, время)
 static int ComputeProcessRisk(const ProcessDisplayInfo& p,
     const std::vector<ProcessDisplayInfo>& all)
@@ -742,7 +742,7 @@ static int ComputeProcessRisk(const ProcessDisplayInfo& p,
     return score;
 }
 
-// === Фоновый воркер обновления списка процессов ===
+// Фоновый воркер обновления списка процессов
 static unsigned __stdcall ProcWorkerProc(void* p) {
     HWND hwnd = (HWND)p;
 

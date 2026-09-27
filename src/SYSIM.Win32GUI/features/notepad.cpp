@@ -14,7 +14,7 @@ using namespace Gdiplus;
 
 namespace Notepad {
 
-    // === State ===
+    // State
     struct Doc {
         std::wstring path;
         std::wstring text;
@@ -590,7 +590,7 @@ namespace Notepad {
         cf.SetLineAlignment(StringAlignmentCenter);
         cf.SetTrimming(StringTrimmingEllipsisCharacter);
 
-        // ===== Toolbar =====
+        // Toolbar
         SolidBrush bgBarBrush(BG_BAR);
         g.FillRectangle(&bgBarBrush, RectF(area.X, area.Y, area.Width, TOOL_H));
         g.DrawLine(&border, area.X, area.Y + TOOL_H - 1.0f,
@@ -640,7 +640,7 @@ namespace Notepad {
             ++idx;
         }
 
-        // ===== Вкладки документов =====
+        // Вкладки документов
         g.FillRectangle(&bgBarBrush, RectF(area.X, area.Y + TOOL_H, area.Width, TABS_H));
 
         g_tabRects.clear();
@@ -694,7 +694,7 @@ namespace Notepad {
             tx += tw;
         }
 
-        // ===== СВОЙ СКРОЛЛБАР =====
+        // СВОЙ СКРОЛЛБАР
         float sbTop = area.Y + TOOL_H + TABS_H;
         float sbBottom = area.Y + area.Height;
         if (g_showOut) sbBottom -= OUT_H;
@@ -740,7 +740,7 @@ namespace Notepad {
     bool OnClick(int x, int y, const RectF& area) {
         float fx = (float)x, fy = (float)y;
 
-        // ===== Скроллбар =====
+        // Скроллбар
         if (g_sbThumbEdit.Width > 0.0f && HitRect(g_sbThumbEdit, fx, fy)) {
             g_sbDragging = true;
             g_sbDragStartY = y;

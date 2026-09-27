@@ -37,7 +37,7 @@ static void DrawButton(Graphics& g, const RectF& r, const wchar_t* label,
     g.DrawString(label, -1, &f, textRect, &cf, &txt);
 }
 
-// === Auth Dialog (Name / Pass) — без изменений ===
+// Auth Dialog (Name / Pass)
 struct PromptState {
     std::wstring prompt;
     std::wstring result;
@@ -124,7 +124,7 @@ static bool Prompt(HWND parent, const wchar_t* title, const wchar_t* prompt,
     return st.ok;
 }
 
-// === Drawing ===
+// Drawing
 void DrawAccountsContent(Graphics& g, const RectF& contentArea, Font& contentFont) {
     (void)contentFont;
     float x = contentArea.X + 10.0f;
@@ -142,7 +142,7 @@ void DrawAccountsContent(Graphics& g, const RectF& contentArea, Font& contentFon
     lf.SetLineAlignment(StringAlignmentCenter);
     lf.SetTrimming(StringTrimmingEllipsisCharacter);
 
-    // === Offline (Recovery Environment) ===
+    // Offline (Recovery Environment)
     if (AccountManager::IsWinRE()) {
         if (!g_loaded) {
             g_offAccounts = AccountManager::GetOfflineAccounts();
@@ -200,7 +200,7 @@ void DrawAccountsContent(Graphics& g, const RectF& contentArea, Font& contentFon
         return;
     }
 
-    // === Online: компактные кнопки (высота 20px, шрифт 10pt) ===
+    // Online: компактные кнопки (высота 20px, шрифт 10pt)
     if (!g_loaded) {
         g_accounts = AccountManager::GetAccounts();
         g_loaded = true;
@@ -225,7 +225,7 @@ void DrawAccountsContent(Graphics& g, const RectF& contentArea, Font& contentFon
 
     g.DrawString(L"Пользователи", -1, &smallFont, RectF(x, btnY - 2.0f, 180.0f, 20.0f), &lf, &txt);
 
-    // === Список учётных записей ===
+    // Список учётных записей
     g_listTop = y;
     g_listH = contentArea.Height - (g_listTop - contentArea.Y) - 8.0f;
     if (g_listH < 10.0f) return;
@@ -277,7 +277,7 @@ void DrawAccountsContent(Graphics& g, const RectF& contentArea, Font& contentFon
     }
 }
 
-// === Обработка кликов ===
+// Обработка кликов
 bool OnAccountsClick(int x, int y, const RectF& contentArea) {
     (void)contentArea;
     float fx = (float)x, fy = (float)y;
@@ -337,7 +337,7 @@ bool OnAccountsClick(int x, int y, const RectF& contentArea) {
     return false;
 }
 
-// === Контекстное меню (ПКМ) ===
+// Контекстное меню (ПКМ)
 bool OnAccountsRightClick(int x, int y, const RectF& contentArea) {
     (void)contentArea;
     float fx = (float)x, fy = (float)y;

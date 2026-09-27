@@ -1,7 +1,7 @@
 #include "globals.h"
 #include "app.h"
 
-// ===== НАВИГАЦИЯ =====
+// НАВИГАЦИЯ
 std::vector<std::wstring> g_mainTabs = {
     L"Главная",          // 0
     L"Диспетчер задач",  // 1
@@ -28,11 +28,11 @@ int g_dragTabIndex = -1;
 bool g_subTabsExpanded = true;
 RectF g_subTabsToggleRect;
 
-// ===== ГОРИЗОНТАЛЬНЫЕ ТАБЫ =====
+// ГОРИЗОНТАЛЬНЫЕ ТАБЫ
 RectF g_horizontalTabRects[20] = {};
 int g_horizontalTabHover = -1;
 
-// ===== СКРОЛЛ КОНТЕНТА =====
+// СКРОЛЛ КОНТЕНТА
 int g_scrollOffset[20] = { 0 };
 int g_maxScroll[20] = { 0 };
 int g_scrollBarWidth = 16;
@@ -43,7 +43,7 @@ int g_scrollBarDragStartOffset = 0;
 std::array<Gdiplus::RectF, 20> g_sidebarTabRects{};
 std::array<Gdiplus::RectF, 20> g_subTabRects{};
 
-// ===== КНОПКИ УПРАВЛЕНИЯ ОКНОМ =====
+// КНОПКИ УПРАВЛЕНИЯ ОКНОМ
 RectF g_tabBtnSettings;
 RectF g_tabBtnMinimize;
 RectF g_tabBtnClose;
@@ -51,11 +51,11 @@ bool g_tabBtnSettingsHover = false;
 bool g_tabBtnMinimizeHover = false;
 bool g_tabBtnCloseHover = false;
 
-// ===== ДОПОЛНИТЕЛЬНЫЕ КНОПКИ =====
+// ДОПОЛНИТЕЛЬНЫЕ КНОПКИ
 RectF g_settingsButtonRect;
 RectF g_notepadButtonRect;
 
-// ===== ТЕМА =====
+// ТЕМА
 std::wstring g_embeddedFontFamilyName = L"Segoe UI";
 std::wstring g_fontFamilyName = L"Segoe UI";
 bool g_useSystemFonts = true;
@@ -189,11 +189,11 @@ void ApplySystemHotkeyProtection() {
         SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
 }
 
-// ===== ПРОВОДНИК =====
+// ПРОВОДНИК
 std::wstring g_explorerPath = L"C:\\";
 int g_explorerSelectedIndex = -1;
 std::vector<int> g_explorerSelectedIndices;
 std::vector<FileExplorer::FileItem> g_explorerItems;
 
-// ===== LAYOUT =====
+// LAYOUT
 bool g_useVerticalLayout = true;

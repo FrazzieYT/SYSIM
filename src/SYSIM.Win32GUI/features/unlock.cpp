@@ -15,7 +15,7 @@ using namespace Gdiplus;
 
 bool g_unlockInProgress = false;
 
-// --- Глобальные состояния ---
+// Глобальные состояния
 static bool g_immediateUnlock = true;
 static bool g_fixBcdSafeBoot = false;
 static bool g_fixAcl = false;
@@ -1590,7 +1590,7 @@ static void DrawButton(
 
 static void StartUnlockScan();
 
-// --- Основная функция рисования ---
+// Основная функция рисования
 void DrawUnlockContent(Graphics& g, const RectF& contentArea, Font& contentFont) {
     (void)contentFont;
 
@@ -1631,7 +1631,7 @@ void DrawUnlockContent(Graphics& g, const RectF& contentArea, Font& contentFont)
         reportY = y + 32.0f;
     }
     else {
-        // ---- Чекбоксы в одну строку ----
+        // Чекбоксы в одну строку
         const float checkboxW = 108.0f;
         const float checkboxGap = 8.0f;
         float startX = x;
@@ -1670,7 +1670,7 @@ void DrawUnlockContent(Graphics& g, const RectF& contentArea, Font& contentFont)
         DrawCheckbox(g, boxRect5, g_fixIfeo, L"IFEO",
             font, textBrush, controlBg, borderPen, checkBrush);
 
-        // ---- Кнопки справа от чекбоксов ----
+        // Кнопки справа от чекбоксов
         float btnW = 80.0f;
         float btnH = 22.0f;
         float btnY = y + 1.0f;
@@ -1688,7 +1688,7 @@ void DrawUnlockContent(Graphics& g, const RectF& contentArea, Font& contentFont)
         reportY = y + 28.0f;
     }
 
-    // ---- Область отчёта / лога ----
+    // Область отчёта / лога
     float reportHeight = contentArea.Height - (reportY - contentArea.Y) - 8.0f;
     if (reportHeight > 10.0f) {
         std::vector<std::wstring> lines;
@@ -1720,7 +1720,7 @@ void DrawUnlockContent(Graphics& g, const RectF& contentArea, Font& contentFont)
     }
 }
 
-// --- Функция, выполняющая разблокировку и формирующая лог ---
+// Функция, выполняющая разблокировку и формирующая лог
 static std::wstring PerformUnlock(bool immediate, bool fixBcd, bool fixAcl, bool fixBoot,
     bool fixIfeo, bool repairSystemFiles) {
     std::wstring log;
@@ -2117,7 +2117,7 @@ void RunWinPeScan() {
     CloseHandle(thread);
 }
 
-// --- Обработка кликов ---
+// Обработка кликов
 bool OnUnlockClick(int x, int y, const RectF& contentArea) {
     (void)contentArea;
     float fx = static_cast<float>(x);

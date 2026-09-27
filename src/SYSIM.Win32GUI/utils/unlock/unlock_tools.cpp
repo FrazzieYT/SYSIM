@@ -6,12 +6,7 @@
 #pragma comment(lib, "advapi32.lib")
 static std::wstring g_offlineDriveHint;
 namespace UnlockTools {
-
-    // ================================================================
-    // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (detail)
-    // ================================================================
     namespace detail {
-
         bool EnablePrivilege(const wchar_t* privilegeName) {
             HANDLE hToken = nullptr;
             if (!OpenProcessToken(GetCurrentProcess(),
@@ -583,7 +578,7 @@ namespace UnlockTools {
 
         std::wstring BcdObject() { return IsLikelyWinRE() ? L"{default}" : L"{current}"; }
 
-        // ---- Offline helpers ----
+        // Offline helpers
         struct OfflineFix {
             std::wstring subKey;
             std::wstring valueName;
@@ -734,7 +729,7 @@ namespace UnlockTools {
             return blockedCount;
         }
 
-        // ---- Дополнительные утилиты ----
+        // Дополнительные утилиты
         bool DeleteKeyTree(HKEY root, const std::wstring& subKey) {
             HKEY hKey = nullptr;
             LONG st = RegOpenKeyExW(root, subKey.c_str(), 0, KEY_ALL_ACCESS, &hKey);
@@ -776,13 +771,9 @@ namespace UnlockTools {
             return GetFileAttributesW(p.c_str()) != INVALID_FILE_ATTRIBUTES;
         }
 
-    } // namespace detail
-
-    // ================================================================
-    // ПУБЛИЧНЫЕ ФУНКЦИИ
-    // ================================================================
-
-    // ----- BCD -----
+    }
+    // Публичные функции
+    // BCD
     bool IsBcdSafeBootEnabled() {
         std::wstring out;
         if (!detail::RunBcdEdit(detail::BcdPrefix() + L"/enum " + detail::BcdObject(), out)) return false;
@@ -796,7 +787,7 @@ namespace UnlockTools {
         return ok;
     }
 
-    // ----- Список ограничений -----
+    // Список ограничений
     std::vector<Restriction> GetKnownRestrictions() {
         std::vector<Restriction> list;
         auto add = [&](const std::wstring& description, const std::vector<HKEY>& hives,
@@ -881,7 +872,7 @@ namespace UnlockTools {
         return list;
     }
 
-    // ----- Проверка и снятие блокировок -----
+    // Проверка и снятие блокировок
     bool IsRestricted(const Restriction& r) {
         for (HKEY hive : r.hives) {
             DWORD value = 0;
@@ -927,7 +918,7 @@ namespace UnlockTools {
             L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options");
     }
 
-    // ----- Offline -----
+    // Offline
     bool RepairOfflineWindows(bool repairUserProfiles, bool repairSystemServices) {
         detail::EnableOfflinePrivileges();
         std::wstring winDrive = detail::FindOfflineWindowsDrive();
@@ -1186,7 +1177,7 @@ namespace UnlockTools {
         return true;
     }
 
-    // ----- Основной отчёт -----
+    // Основной отчёт
     std::wstring GetBestUnlockReport(bool unlock, bool repairUserProfiles,
         bool repairSystemServices) {
         std::wstring body;
@@ -1336,7 +1327,7 @@ namespace UnlockTools {
         return header + body;
     }
 
-    // ----- SRP / AppLocker -----
+    // SRP / AppLocker
     PolicyLocks ScanPolicyLocks() {
         PolicyLocks r;
         HKEY h = nullptr;
@@ -1395,7 +1386,7 @@ namespace UnlockTools {
         detail::DeleteKeyTree(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Policies\\Microsoft\\Windows\\SrpV2");
     }
 
-    // ----- NTFS ACL -----
+    // NTFS ACL
     std::vector<AclProbe> ProbeCriticalPaths() {
         std::vector<AclProbe> out;
         std::vector<std::wstring> paths;
@@ -1449,7 +1440,7 @@ namespace UnlockTools {
         return true;
     }
 
-    // ----- Загрузка (boot) -----
+    // Загрузка (boot)
     BootInfo ScanBoot() {
         BootInfo b;
 
@@ -1508,7 +1499,7 @@ namespace UnlockTools {
         return true;
     }
 
-    // ----- Legacy -----
+    // Legacy
     bool IsRegistryEditorLocked() {
         DWORD value = 0;
         if (detail::ReadDwordOnline(HKEY_CURRENT_USER,
@@ -1551,10 +1542,7 @@ namespace UnlockTools {
             L"EnableLUA", 1);
     }
 
-    // ================================================================
-    // ПУБЛИЧНЫЕ ФУНКЦИИ ДЛЯ ПРОВЕРКИ DisallowRun И IFEO
-    // (без зависимости от detail::OpenOnlineKey)
-    // ================================================================
+    // Публичные функции для проверки DisallowRun И IFEO
     bool HasDisallowRunAt(HKEY root, const std::wstring& explorerSubKey) {
         HKEY hExplorer = nullptr;
         LONG status = RegOpenKeyExW(root, explorerSubKey.c_str(), 0, KEY_READ | KEY_WOW64_64KEY, &hExplorer);
@@ -1661,4 +1649,4 @@ namespace UnlockTools {
         return detail::IsLikelyWinRE();
     }
 
-} // namespace UnlockTools
+}

@@ -175,6 +175,7 @@
     <ClInclude Include="utils\common\string_utils.h" />
     <ClInclude Include="utils\file_system\file_explorer.h" />
     <ClInclude Include="utils\file_system\text_file.h" />
+    <ClInclude Include="utils\file_system\winre_manager.h" />
     <ClInclude Include="utils\history\system_monitor.h" />
     <ClInclude Include="utils\net_utils.h" />
     <ClInclude Include="utils\process\offline_service_manager.h" />
@@ -203,6 +204,7 @@
     <ClCompile Include="utils\accounts\account_manager.cpp" />
     <ClCompile Include="utils\file_system\file_explorer.cpp" />
     <ClCompile Include="utils\file_system\text_file.cpp" />
+    <ClCompile Include="utils\file_system\winre_manager.cpp" />
     <ClCompile Include="utils\history\system_monitor.cpp" />
     <ClCompile Include="utils\process\offline_service_manager.cpp" />
     <ClCompile Include="utils\process\service_manager.cpp" />

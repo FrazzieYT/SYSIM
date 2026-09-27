@@ -16,7 +16,7 @@
 #pragma comment(lib, "comdlg32.lib")
 using namespace Gdiplus;
 
-// === Context menu commands ===
+// Context menu commands
 enum : int {
     IDM_REG_OPEN = 3001,
     IDM_REG_NEW_KEY,
@@ -54,12 +54,12 @@ enum : int {
     TOOL_NEW_VALUE
 };
 
-// === Offline mount names ===
+// Offline mount names
 static const wchar_t* OFFLINE_SOFTWARE_MOUNT = L"SYSIM_OFFLINE_SOFTWARE";
 static const wchar_t* OFFLINE_SYSTEM_MOUNT = L"SYSIM_OFFLINE_SYSTEM";
 static const wchar_t* OFFLINE_USER_PREFIX = L"SYSIM_OFFLINE_USER_";
 
-// === Tab state ===
+// Tab state
 enum class RootAction {
     Normal,
     OfflineHive,
@@ -108,7 +108,7 @@ static bool g_foundWindowsScanned = false;
 static bool g_recoveryChecked = false;
 static bool g_isRecovery = false;
 
-// == Toolbar scrolling ==
+// Toolbar scrolling
 struct ToolbarButton {
     int id = 0;
     RectF rect;
@@ -119,7 +119,7 @@ static RectF g_toolbarRightArrow;
 static bool g_toolbarArrowsVisible = false;
 static float g_toolbarOffset = 0.0f;
 
-// === Inline editing ===
+// Inline editing
 enum class RegistryEditTarget {
     None,
     KeyName,
@@ -223,7 +223,7 @@ static void CopyTextToClipboard(const std::wstring& text) {
     CloseClipboard();
 }
 
-// === Local offline functions ===
+// Local offline functions
 static bool Local_EnablePrivilege(const wchar_t* privilegeName) {
     HANDLE token = nullptr;
     if (!OpenProcessToken(
@@ -411,7 +411,7 @@ static bool Local_UnloadHive(
     return false;
 }
 
-// === Local search ===
+// Local search
 static bool ContainsIgnoreCase(const std::wstring& text, const std::wstring& needle) {
     if (needle.empty()) {
         return true;
@@ -2094,34 +2094,38 @@ struct RegistryLayout {
 static RegistryLayout GetRegistryLayout(const RectF& contentArea) {
     RegistryLayout layout;
     const float margin = 8.0f;
-    const float spacing = 6.0f;
-    float topSafe = 8.0f;
+    const float spacing = 3.0f;
+
+    float topSafe = 2.0f;
     if (g_useVerticalLayout && contentArea.Y < 20.0f) {
-        topSafe = 40.0f;
+        topSafe = 4.0f;
     }
+
     layout.toolbar = RectF(
         contentArea.X + margin,
         contentArea.Y + topSafe,
         contentArea.Width - 2.0f * margin,
-        34.0f
+        30.0f
     );
+
     layout.path = RectF(
         contentArea.X + margin,
-        layout.toolbar.Y + layout.toolbar.Height + 6.0f,
+        layout.toolbar.Y + layout.toolbar.Height + spacing,
         contentArea.Width - 2.0f * margin,
-        26.0f
+        24.0f
     );
-    float listY = layout.path.Y + layout.path.Height + 6.0f;
-    float listHeight =
-        contentArea.Height - (listY - contentArea.Y) - margin;
+
+    float listY = layout.path.Y + layout.path.Height + spacing;
+    float listHeight = contentArea.Height - (listY - contentArea.Y) - margin;
     if (listHeight < 0.0f) {
         listHeight = 0.0f;
     }
-    float totalListWidth =
-        contentArea.Width - 2.0f * margin - spacing;
+
+    float totalListWidth = contentArea.Width - 2.0f * margin - spacing;
     if (totalListWidth < 1.0f) {
         totalListWidth = 1.0f;
     }
+
     const float minLeftWidth = 200.0f;
     const float minRightWidth = 280.0f;
     float leftWidth = totalListWidth * g_registryLeftPaneRatio;
@@ -2135,26 +2139,31 @@ static RegistryLayout GetRegistryLayout(const RectF& contentArea) {
     if (leftWidth > maxLeftWidth) {
         leftWidth = maxLeftWidth;
     }
+
     float rightWidth = totalListWidth - leftWidth;
     if (rightWidth < 0.0f) {
         rightWidth = 0.0f;
     }
+
     layout.leftList = RectF(
         contentArea.X + margin,
         listY,
         leftWidth,
         listHeight
     );
+
     layout.rightList = RectF(
         layout.leftList.X + layout.leftList.Width + spacing,
         listY,
         rightWidth,
         listHeight
     );
+
     const float headerHeight = 22.0f;
-    layout.leftDataTop = layout.leftList.Y + headerHeight + 6.0f;
-    layout.rightDataTop = layout.rightList.Y + headerHeight + 6.0f;
+    layout.leftDataTop = layout.leftList.Y + headerHeight + 4.0f;
+    layout.rightDataTop = layout.rightList.Y + headerHeight + 4.0f;
     layout.rowHeight = 22.0f;
+
     return layout;
 }
 
@@ -2573,7 +2582,7 @@ static void DrawRegButton(
     g.DrawString(text.c_str(), -1, &font, rect, &format, &textBrush);
 }
 
-// === НОВАЯ ФУНКЦИЯ: Рисуем строку с цветным квадратиком ===
+// Рисуем строку с цветным квадратиком
 static void DrawRegListItemWithIcon(
     Graphics& g,
     const RectF& listRect,
@@ -2617,7 +2626,7 @@ static void DrawRegListItemWithIcon(
     g.DrawString(text.c_str(), -1, &font, textRect, &format, &textBrush);
 }
 
-// === Цвета иконок ===
+// Цвета иконок
 static const Color COLOR_ICON_ROOT = Color(255, 156, 39, 176);   // Фиолетовый — корни реестра
 static const Color COLOR_ICON_KEY = Color(255, 33, 150, 243);    // Синий — разделы/ключи (как папки)
 static const Color COLOR_ICON_VALUE = Color(255, 76, 175, 80);   // Зелёный — параметры (как файлы)
@@ -2912,14 +2921,14 @@ void DrawRegistryContent(
         &textBrush
     );
 
-    // === Визуальный разделитель между панелями (толстая линия) ===
+    // Визуальный разделитель между панелями (толстая линия)
     float splitX = layout.leftList.X + layout.leftList.Width + 3.0f;
     Pen splitPen(Color(80, 80, 80), 2.0f);
     g.DrawLine(&splitPen, splitX, layout.leftList.Y, splitX, layout.leftList.Y + layout.leftList.Height);
 
     float rowY = layout.leftDataTop;
 
-    // === LEFT PANEL ===
+    // LEFT PANEL
     if (!g_regRoot) {
         if (g_rootItems.empty()) {
             RefreshRootItems();
@@ -2988,7 +2997,7 @@ void DrawRegistryContent(
         }
     }
 
-    // === RIGHT PANEL ===
+    // RIGHT PANEL
     rowY = layout.rightDataTop;
     if (!g_regRoot) {
         RectF hintRect(
@@ -3053,7 +3062,7 @@ void DrawRegistryContent(
     else {
         float nameWidth = GetRegistryValueNameWidth(layout.rightList);
 
-        // === Разделитель между колонками "Имя" и "Данные" ===
+        // Разделитель между колонками "Имя" и "Данные"
         float valueSepX = layout.rightList.X + nameWidth;
         Pen valueSepPen(Color(60, 60, 60), 1.0f);
         g.DrawLine(&valueSepPen, valueSepX, layout.rightList.Y, valueSepX, layout.rightList.Y + layout.rightList.Height);

@@ -35,7 +35,7 @@ bool App::Init(HINSTANCE hInstance) {
         return false;
     }
 
-    // === Init ===
+    // Инциализация
     // Ресурсы
     g_embeddedFontFamilyName = L"Segoe UI";
     PrivateFontCollection pfc;
@@ -103,7 +103,7 @@ int App::Run(int nCmdShow) {
     return (int)msg.wParam;
 }
 
-// === Back buffer ===
+// Back buffer
 void App::EnsureBackBuffer(int width, int height) {
     if (width <= 0 || height <= 0) return;
     if (m_memBitmap && m_memWidth == width && m_memHeight == height) return;
@@ -137,7 +137,7 @@ void App::ReleaseBackBuffer() {
     m_memHeight = 0;
 }
 
-// === Shell ===
+// Shell
 // Управление треем
 void App::MinimizeToTray() {
     if (!m_trayAdded) {
@@ -154,9 +154,6 @@ void App::MinimizeToTray() {
         }
         wcscpy_s(nid.szTip, L"SYSIM Utility");
         if (!Shell_NotifyIconW(NIM_ADD, &nid)) {
-            // Не показываем модальный диалог на штатных ошибках иконки трея:
-            // в некоторых средах/сессиях добавление иконки в трее может быть недоступно,
-            // но это не должно ломать основной функционал и блокировать приложение.
             m_trayAdded = false;
             return;
         }
