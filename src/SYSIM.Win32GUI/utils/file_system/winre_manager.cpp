@@ -3,12 +3,12 @@
 #include <string>
 #include <vector>
 #include <gdiplus.h>
-#include <winhttp.h>
+#include <commdlg.h>
 #include <winternl.h>
 #include <windowsx.h>
 
-#pragma comment(lib, "winhttp.lib")
 #pragma comment(lib, "gdiplus.lib")
+#pragma comment(lib, "comdlg32.lib")
 
 using namespace Gdiplus;
 
@@ -261,143 +261,6 @@ bool IsValidWinRECandidate(const std::wstring& path) {
     return IsRegularFile(path) && HasWimHeader(path) && IsPlausibleWinRESize(path);
 }
 
-bool DownloadWinRE(const std::wstring& url, const std::wstring& outPath) {
-    if (url.empty() || url.size() > MAXDWORD) {
-        return false;
-    }
-
-    URL_COMPONENTS components{};
-    components.dwStructSize = sizeof(components);
-    if (!WinHttpCrackUrl(url.c_str(), static_cast<DWORD>(url.size()), 0, &components) ||
-        components.nScheme != INTERNET_SCHEME_HTTPS ||
-        components.dwHostNameLength == 0 || components.dwUrlPathLength == 0) {
-        return false;
-    }
-
-    const std::wstring host(components.lpszHostName, components.dwHostNameLength);
-    std::wstring objectName(components.lpszUrlPath, components.dwUrlPathLength);
-    if (components.lpszExtraInfo && components.dwExtraInfoLength != 0) {
-        objectName.append(components.lpszExtraInfo, components.dwExtraInfoLength);
-    }
-
-    HINTERNET session = WinHttpOpen(L"SYSIM/1.0", WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
-        WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
-    if (!session) {
-        return false;
-    }
-    WinHttpSetTimeouts(session, 15000, 15000, 30000, 30000);
-
-    HINTERNET connection = WinHttpConnect(session, host.c_str(), components.nPort, 0);
-    if (!connection) {
-        WinHttpCloseHandle(session);
-        return false;
-    }
-
-    HINTERNET request = WinHttpOpenRequest(connection, L"GET", objectName.c_str(), nullptr,
-        WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
-    if (!request) {
-        WinHttpCloseHandle(connection);
-        WinHttpCloseHandle(session);
-        return false;
-    }
-    /*
-    DWORD securityFlags = SECURITY_FLAG_IGNORE_UNKNOWN_CA |
-        SECURITY_FLAG_IGNORE_CERT_CN_INVALID |
-        SECURITY_FLAG_IGNORE_CERT_DATE_INVALID;
-    WinHttpSetOption(request, WINHTTP_OPTION_SECURITY_FLAGS, &securityFlags, sizeof(securityFlags)); */
-
-    DWORD redirectPolicy = WINHTTP_OPTION_REDIRECT_POLICY_DISALLOW_HTTPS_TO_HTTP;
-    const bool configured = WinHttpSetOption(request, WINHTTP_OPTION_REDIRECT_POLICY,
-        &redirectPolicy, sizeof(redirectPolicy)) != FALSE;
-    const bool requested = configured && WinHttpSendRequest(request,
-        WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0) &&
-        WinHttpReceiveResponse(request, nullptr);
-
-    DWORD statusCode = 0;
-    DWORD statusCodeSize = sizeof(statusCode);
-    const bool successfulStatus = requested && WinHttpQueryHeaders(request,
-        WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
-        WINHTTP_HEADER_NAME_BY_INDEX, &statusCode, &statusCodeSize,
-        WINHTTP_NO_HEADER_INDEX) && statusCode >= 200 && statusCode < 300;
-    if (!successfulStatus) {
-        WinHttpCloseHandle(request);
-        WinHttpCloseHandle(connection);
-        WinHttpCloseHandle(session);
-        return false;
-    }
-
-    DWORD contentLength = 0;
-    DWORD contentLengthSize = sizeof(contentLength);
-    if (WinHttpQueryHeaders(request, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER,
-            WINHTTP_HEADER_NAME_BY_INDEX, &contentLength, &contentLengthSize,
-            WINHTTP_NO_HEADER_INDEX) && contentLength > kMaximumWinRESize) {
-        WinHttpCloseHandle(request);
-        WinHttpCloseHandle(connection);
-        WinHttpCloseHandle(session);
-        return false;
-    }
-
-    HANDLE file = CreateFileW(outPath.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW,
-        FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (file == INVALID_HANDLE_VALUE) {
-        WinHttpCloseHandle(request);
-        WinHttpCloseHandle(connection);
-        WinHttpCloseHandle(session);
-        return false;
-    }
-
-    std::vector<BYTE> buffer(64 * 1024);
-    ULONGLONG totalBytes = 0;
-    bool downloaded = true;
-    for (;;) {
-        DWORD available = 0;
-        if (!WinHttpQueryDataAvailable(request, &available)) {
-            downloaded = false;
-            break;
-        }
-        if (available == 0) {
-            break;
-        }
-
-        while (available != 0) {
-            const DWORD toRead = available < buffer.size()
-                ? available : static_cast<DWORD>(buffer.size());
-            DWORD read = 0;
-            if (!WinHttpReadData(request, buffer.data(), toRead, &read) || read == 0) {
-                downloaded = false;
-                break;
-            }
-
-            totalBytes += read;
-            if (totalBytes > kMaximumWinRESize) {
-                downloaded = false;
-                break;
-            }
-
-            DWORD written = 0;
-            if (!WriteFile(file, buffer.data(), read, &written, nullptr) || written != read) {
-                downloaded = false;
-                break;
-            }
-            available -= read;
-        }
-
-        if (!downloaded) {
-            break;
-        }
-    }
-
-    CloseHandle(file);
-    WinHttpCloseHandle(request);
-    WinHttpCloseHandle(connection);
-    WinHttpCloseHandle(session);
-
-    if (!downloaded) {
-        RemoveFileIfPresent(outPath);
-    }
-    return downloaded;
-}
-
 void HealMountedWinRE(const std::wstring& mountDir) {
     const std::wstring iniPath = mountDir + L"\\Windows\\System32\\winpeshl.ini";
     if (IsRegularFile(iniPath)) {
@@ -452,21 +315,16 @@ bool GetRecoveryDirectory(std::wstring& directory) {
     return IsSafeDirectory(directory);
 }
 
-bool PrepareHealedAndInjectedWinRE(const std::wstring& workDir,
+bool PrepareHealedAndInjectedWinRE(const std::wstring& sourceWim,
+    const std::wstring& workDir,
     const std::wstring& outPath,
     const std::wstring& exeSourcePath,
     const std::wstring& exeNameInImage) {
-    std::wstring recoveryDirectory;
-    if (!GetRecoveryDirectory(recoveryDirectory)) {
+    if (!IsRegularFile(sourceWim)) {
         return false;
     }
 
-    const std::wstring sourcePath = recoveryDirectory + L"\\Winre.wim";
-    if (!IsRegularFile(sourcePath)) {
-        return false;
-    }
-
-    if (!CopyFileW(sourcePath.c_str(), outPath.c_str(), TRUE)) {
+    if (!CopyFileW(sourceWim.c_str(), outPath.c_str(), TRUE)) {
         return false;
     }
 
@@ -542,158 +400,33 @@ bool RestorePreviousImage(const std::wstring& targetPath, const std::wstring& ba
 
 } // namespace
 
-bool ObtainCleanWinRE(bool useSystemSource, const std::wstring& outPath,
+bool ObtainCleanWinRE(const std::wstring& outPath,
     const std::wstring& exeSourcePath,
     const std::wstring& exeNameInImage) {
     if (outPath.empty() || GetFileAttributesW(outPath.c_str()) != INVALID_FILE_ATTRIBUTES) {
         return false;
     }
 
-    if (useSystemSource) {
-        const size_t separator = outPath.find_last_of(L"\\/");
-        const std::wstring workDir = separator != std::wstring::npos
-            ? outPath.substr(0, separator)
-            : outPath;
-        return PrepareHealedAndInjectedWinRE(workDir, outPath, exeSourcePath, exeNameInImage);
+    std::wstring recoveryDirectory;
+    if (!GetRecoveryDirectory(recoveryDirectory)) {
+        return false;
     }
 
-    return DownloadWinRE(WINRE_URL, outPath);
+    const std::wstring sourceWim = recoveryDirectory + L"\\Winre.wim";
+    const size_t separator = outPath.find_last_of(L"\\/");
+    const std::wstring workDir = separator != std::wstring::npos
+        ? outPath.substr(0, separator)
+        : outPath;
+
+    return PrepareHealedAndInjectedWinRE(sourceWim, workDir, outPath,
+        exeSourcePath, exeNameInImage);
 }
 
 bool ReplaceWinREWithInjectedApp() {
-    if (!IsRunAsAdmin()) {
-        MessageBoxW(nullptr, L"Требуются права администратора.", L"WinRE",
-            MB_OK | MB_ICONERROR);
-        return false;
-    }
-
-    if (IsRunningInWinRE()) {
-        MessageBoxW(nullptr,
-            L"Нельзя заменить WinRE из запущенной среды восстановления.\r\n"
-            L"Загрузите Windows и повторите попытку.",
-            L"WinRE", MB_OK | MB_ICONERROR);
-        return false;
-    }
-    
-    wchar_t exePath[MAX_PATH];
-    DWORD len = GetModuleFileNameW(nullptr, exePath, MAX_PATH);
-    if (len == 0 || len >= MAX_PATH) {
-        MessageBoxW(nullptr, L"Не удалось получить путь к текущему приложению.", L"WinRE",
-            MB_OK | MB_ICONERROR);
-        return false;
-    }
-
-    std::wstring exeSourcePath = exePath;
-    std::wstring exeNameInImage = L"sysim.exe";
-
-    std::wstring workDirectory;
-    if (!CreateWorkingDirectory(workDirectory)) {
-        MessageBoxW(nullptr, L"Не удалось создать временный рабочий каталог.", L"WinRE",
-            MB_OK | MB_ICONERROR);
-        return false;
-    }
-
-    const std::wstring candidatePath = workDirectory + L"\\winre.wim";
-    bool success = ObtainCleanWinRE(true, candidatePath, exeSourcePath, exeNameInImage);
-
-    if (!success) {
-        MessageBoxW(nullptr, L"Системный Winre.wim отсутствует или недоступен.", L"WinRE",
-            MB_OK | MB_ICONERROR);
-        RemoveDirectoryRecursively(workDirectory);
-        return false;
-    }
-
-    if (!IsValidWinRECandidate(candidatePath)) {
-        MessageBoxW(nullptr, L"Полученный Winre.wim имеет неверный заголовок или размер.", L"WinRE",
-            MB_OK | MB_ICONERROR);
-        RemoveDirectoryRecursively(workDirectory);
-        return false;
-    }
-
-    std::wstring recoveryDirectory;
-    const bool hasRecoveryDirectory = GetRecoveryDirectory(recoveryDirectory);
-    const std::wstring targetPath = recoveryDirectory + L"\\Winre.wim";
-
-    if (!hasRecoveryDirectory || !IsRegularFile(targetPath)) {
-        MessageBoxW(nullptr,
-            L"Системный файл C:\\Windows\\System32\\Recovery\\Winre.wim отсутствует или недоступен.",
-            L"WinRE", MB_OK | MB_ICONERROR);
-        RemoveDirectoryRecursively(workDirectory);
-        return false;
-    }
-
-    const std::wstring backupPath = workDirectory + L"\\previous-winre.wim";
-    const std::wstring pendingPath = recoveryDirectory + L"\\Winre.wim.sysim-new";
-
-    if (!CopyFileW(targetPath.c_str(), backupPath.c_str(), TRUE)) {
-        MessageBoxW(nullptr, L"Не удалось создать резервную копию Winre.wim.", L"WinRE",
-            MB_OK | MB_ICONERROR);
-        RemoveDirectoryRecursively(workDirectory);
-        return false;
-    }
-
-    DWORD exitCode = 0;
-    bool recoveryDisabled = false;
-
-    if (!RunReagentc({ L"/disable" }, exitCode) || exitCode != 0) {
-        MessageBoxW(nullptr, L"reagentc /disable завершился с ошибкой.", L"WinRE",
-            MB_OK | MB_ICONERROR);
-        RemoveDirectoryRecursively(workDirectory);
-        return false;
-    }
-    recoveryDisabled = true;
-
-    bool replacementStarted = false;
-    RemoveFileIfPresent(pendingPath);
-
-    if (!CopyFileW(candidatePath.c_str(), pendingPath.c_str(), TRUE)) {
-        RemoveFileIfPresent(pendingPath);
-        MessageBoxW(nullptr, L"Не удалось подготовить новый Winre.wim.", L"WinRE",
-            MB_OK | MB_ICONERROR);
-        if (recoveryDisabled) RunReagentc({ L"/enable" }, exitCode);
-        RemoveDirectoryRecursively(workDirectory);
-        return false;
-    }
-
-    if (!MoveFileExW(pendingPath.c_str(), targetPath.c_str(),
-        MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
-        RemoveFileIfPresent(pendingPath);
-        MessageBoxW(nullptr, L"Не удалось заменить системный Winre.wim.", L"WinRE",
-            MB_OK | MB_ICONERROR);
-        if (recoveryDisabled) RunReagentc({ L"/enable" }, exitCode);
-        RemoveDirectoryRecursively(workDirectory);
-        return false;
-    }
-    replacementStarted = true;
-
-    if (!RunReagentc({ L"/setreimage", L"/path", recoveryDirectory }, exitCode) || exitCode != 0) {
-        MessageBoxW(nullptr, L"reagentc /setreimage завершился с ошибкой.", L"WinRE",
-            MB_OK | MB_ICONERROR);
-        if (replacementStarted) RestorePreviousImage(targetPath, backupPath);
-        else if (recoveryDisabled) RunReagentc({ L"/enable" }, exitCode);
-        RemoveDirectoryRecursively(workDirectory);
-        return false;
-    }
-
-    if (!RunReagentc({ L"/enable" }, exitCode) || exitCode != 0) {
-        MessageBoxW(nullptr, L"reagentc /enable завершился с ошибкой.", L"WinRE",
-            MB_OK | MB_ICONERROR);
-        if (replacementStarted) RestorePreviousImage(targetPath, backupPath);
-        else if (recoveryDisabled) RunReagentc({ L"/enable" }, exitCode);
-        RemoveDirectoryRecursively(workDirectory);
-        return false;
-    }
-
-    RemoveDirectoryRecursively(workDirectory);
-
-    MessageBoxW(nullptr,
-        L"WinRE успешно заменён, очищен от вирусов и настроен для автозапуска приложения.\r\n"
-        L"При загрузке в среду восстановления приложение запустится автоматически.",
-        L"WinRE", MB_OK | MB_ICONINFORMATION);
-    return true;
+    return ReplaceWinRE(WinRESource::System);
 }
 
-bool ReplaceWinRE(bool useSystemSource) {
+bool ReplaceWinRE(WinRESource source, const std::wstring& localWimPath) {
     if (!IsRunAsAdmin()) {
         MessageBoxW(nullptr, L"Требуются права администратора.", L"WinRE",
             MB_OK | MB_ICONERROR);
@@ -723,9 +456,9 @@ bool ReplaceWinRE(bool useSystemSource) {
         return false;
     }
 
-    // Исходный WIM
-    std::wstring rawWim;
-    if (useSystemSource) {
+    std::wstring sourceWim;
+    switch (source) {
+    case WinRESource::System: {
         std::wstring recoveryDir;
         if (!GetRecoveryDirectory(recoveryDir)) {
             MessageBoxW(nullptr, L"C:\\Windows\\System32\\Recovery недоступен.", L"WinRE",
@@ -733,33 +466,44 @@ bool ReplaceWinRE(bool useSystemSource) {
             RemoveDirectoryRecursively(workDirectory);
             return false;
         }
-        rawWim = recoveryDir + L"\\Winre.wim";
-        if (!IsRegularFile(rawWim)) {
+        sourceWim = recoveryDir + L"\\Winre.wim";
+        if (!IsRegularFile(sourceWim)) {
             MessageBoxW(nullptr, L"Системный Winre.wim отсутствует.", L"WinRE",
                 MB_OK | MB_ICONERROR);
             RemoveDirectoryRecursively(workDirectory);
             return false;
         }
+        break;
     }
-    else {
-        rawWim = workDirectory + L"\\raw_winre.wim";
-        if (!DownloadWinRE(WINRE_URL, rawWim)) {
-            MessageBoxW(nullptr, L"Не удалось скачать Winre.wim с сервера.", L"WinRE",
-                MB_OK | MB_ICONERROR);
+    case WinRESource::File: {
+        if (localWimPath.empty() || !IsRegularFile(localWimPath)) {
+            MessageBoxW(nullptr, L"Локальный WIM-файл не выбран или недоступен.",
+                L"WinRE", MB_OK | MB_ICONERROR);
             RemoveDirectoryRecursively(workDirectory);
             return false;
         }
+        sourceWim = localWimPath;
+        break;
+    }
+    default: {
+        MessageBoxW(nullptr, L"Неизвестный источник Winre.wim.", L"WinRE",
+            MB_OK | MB_ICONERROR);
+        RemoveDirectoryRecursively(workDirectory);
+        return false;
+    }
     }
 
-    if (!IsValidWinRECandidate(rawWim)) {
-        MessageBoxW(nullptr, L"Полученный Winre.wim имеет неверный заголовок или размер.",
+    if (!IsValidWinRECandidate(sourceWim)) {
+        MessageBoxW(nullptr,
+            L"Исходный Winre.wim имеет неверный заголовок или размер.",
             L"WinRE", MB_OK | MB_ICONERROR);
         RemoveDirectoryRecursively(workDirectory);
         return false;
     }
 
     const std::wstring candidatePath = workDirectory + L"\\winre.wim";
-    if (!PrepareHealedAndInjectedWinRE(workDirectory, candidatePath, self, L"sysim.exe")) {
+    if (!PrepareHealedAndInjectedWinRE(sourceWim, workDirectory,
+        candidatePath, self, L"sysim.exe")) {
         MessageBoxW(nullptr, L"Не удалось очистить и подготовить образ WinRE.",
             L"WinRE", MB_OK | MB_ICONERROR);
         RemoveDirectoryRecursively(workDirectory);
@@ -857,8 +601,9 @@ namespace { // Диалог (выбор)
     struct WinREReplaceState {
         int  result = 0;
         bool done = false;
-        bool useSystem = true;
+        WinRESource source = WinRESource::System;
         int  hover = -1;
+        std::wstring selectedFile;
     };
 
     static RectF WnrClient(HWND h) {
@@ -874,6 +619,34 @@ namespace { // Диалог (выбор)
         const float bw = 120.0f, bh = 34.0f, gap = 10.0f, m = 16.0f;
         ok = RectF(c.Width - m - bw, c.Height - m - bh, bw, bh);
         cancel = RectF(ok.X - gap - bw, ok.Y, bw, bh);
+    }
+
+    static std::wstring FileNameOnly(const std::wstring& path) {
+        const size_t sep = path.find_last_of(L"\\/");
+        return sep == std::wstring::npos ? path : path.substr(sep + 1);
+    }
+
+    static bool BrowseForWimFile(HWND owner, const std::wstring& initial,
+        std::wstring& outPath)
+    {
+        wchar_t buffer[MAX_PATH] = {};
+        if (!initial.empty()) {
+            wcsncpy_s(buffer, initial.c_str(), _TRUNCATE);
+        }
+
+        OPENFILENAMEW ofn{};
+        ofn.lStructSize = sizeof(ofn);
+        ofn.hwndOwner = owner;
+        ofn.lpstrFilter = L"WIM images (*.wim)\0*.wim\0All files (*.*)\0*.*\0";
+        ofn.lpstrFile = buffer;
+        ofn.nMaxFile = _countof(buffer);
+        ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST |
+            OFN_NOCHANGEDIR | OFN_EXPLORER;
+        ofn.lpstrTitle = L"Выберите Winre.wim";
+
+        if (!GetOpenFileNameW(&ofn)) return false;
+        outPath = buffer;
+        return true;
     }
 
     static void WnrDraw(HWND hWnd, HDC hdc) {
@@ -896,13 +669,15 @@ namespace { // Диалог (выбор)
 
         const wchar_t* opts[2] = {
             L"Системный (вылечить)",
-            L"URL (скачать чистый)",
+            L"Локальный WIM-файл…",
         };
         Font optFont(&ff, 13.5f, FontStyleRegular, UnitPixel);
 
         for (int i = 0; i < 2; ++i) {
             RectF r = WnrOptRect(c, i);
-            const bool checked = (i == 0) ? st->useSystem : !st->useSystem;
+            const bool checked =
+                (i == 0 && st->source == WinRESource::System) ||
+                (i == 1 && st->source == WinRESource::File);
             const bool hovered = (st->hover == i);
 
             if (hovered) {
@@ -931,10 +706,15 @@ namespace { // Диалог (выбор)
                     cx + 5.0f, cy - 4.0f);
             }
 
+            std::wstring label = opts[i];
+            if (i == 1 && !st->selectedFile.empty()) {
+                label = L"Файл: " + FileNameOnly(st->selectedFile);
+            }
+
             SolidBrush tb(checked ? COLOR_TEXT : COLOR_TEXT_MUTED);
             RectF tr(cx + box / 2.0f + 12.0f, r.Y,
                 r.Width - (box + 36.0f), r.Height);
-            g.DrawString(opts[i], -1, &optFont, tr, &sf, &tb);
+            g.DrawString(label.c_str(), -1, &optFont, tr, &sf, &tb);
         }
 
         RectF ok, cancel;
@@ -1049,7 +829,7 @@ namespace { // Диалог (выбор)
 
             for (int i = 0; i < 2; ++i) {
                 if (WnrOptRect(c, i).Contains(x, y)) {
-                    st->useSystem = (i == 0);
+                    st->source = (i == 0) ? WinRESource::System : WinRESource::File;
                     InvalidateRect(hWnd, nullptr, TRUE);
                     return 0;
                 }
@@ -1057,7 +837,14 @@ namespace { // Диалог (выбор)
             RectF ok, cancel;
             WnrBtnRects(c, ok, cancel);
             if (ok.Contains(x, y)) {
-                st->result = st->useSystem ? 1 : 2;
+                if (st->source == WinRESource::File) {
+                    std::wstring picked;
+                    if (!BrowseForWimFile(hWnd, st->selectedFile, picked)) {
+                        return 0;
+                    }
+                    st->selectedFile = picked;
+                }
+                st->result = (st->source == WinRESource::System) ? 1 : 2;
                 st->done = true;
                 return 0;
             }
@@ -1073,12 +860,19 @@ namespace { // Диалог (выбор)
             if (!st) break;
             if (wParam == VK_ESCAPE) { st->result = 0; st->done = true; return 0; }
             if (wParam == VK_RETURN) {
-                st->result = st->useSystem ? 1 : 2;
+                if (st->source == WinRESource::File) {
+                    std::wstring picked;
+                    if (!BrowseForWimFile(hWnd, st->selectedFile, picked)) return 0;
+                    st->selectedFile = picked;
+                }
+                st->result = (st->source == WinRESource::System) ? 1 : 2;
                 st->done = true;
                 return 0;
             }
             if (wParam == VK_UP || wParam == VK_DOWN) {
-                st->useSystem = !st->useSystem;
+                st->source = (st->source == WinRESource::System)
+                    ? WinRESource::File
+                    : WinRESource::System;
                 InvalidateRect(hWnd, nullptr, TRUE);
                 return 0;
             }
@@ -1091,7 +885,7 @@ namespace { // Диалог (выбор)
         return DefWindowProcW(hWnd, msg, wParam, lParam);
     }
 
-    int RunReplaceDialog(HWND parent) {
+    int RunReplaceDialog(HWND parent, std::wstring& outSelectedFile) {
         static bool reg = false;
         HINSTANCE hInst = GetModuleHandleW(nullptr);
 
@@ -1138,13 +932,17 @@ namespace { // Диалог (выбор)
         if (parent) EnableWindow(parent, TRUE);
         DestroyWindow(h);
         if (parent) SetForegroundWindow(parent);
+
+        outSelectedFile = st.selectedFile;
         return st.result;
     }
 
 } // namespace
 
 bool ShowReplaceWinREDialog(HWND owner) {
-    const int choice = RunReplaceDialog(owner);
+    std::wstring selectedFile;
+    const int choice = RunReplaceDialog(owner, selectedFile);
     if (choice == 0) return false;
-    return ReplaceWinRE(choice == 1);
+    const WinRESource source = (choice == 1) ? WinRESource::System : WinRESource::File;
+    return ReplaceWinRE(source, selectedFile);
 }

@@ -2,11 +2,14 @@
 #include <windows.h>
 #include <string>
 
-#define WINRE_URL L"https://server/winre.wim"
+enum class WinRESource {
+    System,
+    File,
+};
 
-bool ObtainCleanWinRE(bool useSystemSource, const std::wstring& outPath,
+bool ObtainCleanWinRE(const std::wstring& outPath,
     const std::wstring& exeSourcePath = L"",
     const std::wstring& exeNameInImage = L"");
-bool ReplaceWinRE(bool useSystemSource);
+bool ReplaceWinRE(WinRESource source, const std::wstring& localWimPath = L"");
 bool ReplaceWinREWithInjectedApp();
 bool ShowReplaceWinREDialog(HWND owner);

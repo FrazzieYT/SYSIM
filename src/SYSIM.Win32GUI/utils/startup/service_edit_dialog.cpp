@@ -175,37 +175,33 @@ namespace ServiceEditDialog {
             static HBRUSH darkBrush = CreateSolidBrush(RGB(18, 18, 18));
             return (LRESULT)darkBrush;
         }
-        case WM_CTLCOLORBTN: {
+        /*case WM_CTLCOLORBTN: {
             HDC hdc = (HDC)wParam;
             SetBkMode(hdc, TRANSPARENT);
             SetTextColor(hdc, RGB(240, 240, 240));
             return (LRESULT)GetStockObject(NULL_BRUSH);
-        }
+        }*/
         case WM_DRAWITEM: {
             DRAWITEMSTRUCT* dis = (DRAWITEMSTRUCT*)lParam;
-            if (dis && dis->CtlID == 3) {
+            if (dis && (dis->CtlID == 1 || dis->CtlID == 2 || dis->CtlID == 3 || dis->CtlID == 101)) {
                 RECT r = dis->rcItem;
                 HBRUSH bg = CreateSolidBrush(RGB(18, 18, 18));
                 FillRect(dis->hDC, &r, bg);
                 DeleteObject(bg);
-
-                HPEN pen = CreatePen(PS_SOLID, 2, RGB(255, 255, 255));
+                HPEN pen = CreatePen(PS_SOLID, 1, RGB(80, 80, 80));
                 HGDIOBJ oldPen = SelectObject(dis->hDC, pen);
-                HGDIOBJ oldBrush = SelectObject(dis->hDC, GetStockObject(NULL_BRUSH));
-                SetBkMode(dis->hDC, TRANSPARENT);
-
-                int cx = (r.left + r.right) / 2;
-                int cy = (r.top + r.bottom) / 2;
-                int s = min(r.right - r.left, r.bottom - r.top) / 2 - 4;
-
-                MoveToEx(dis->hDC, cx - s, cy - s, nullptr);
-                LineTo(dis->hDC, cx + s, cy + s);
-                MoveToEx(dis->hDC, cx + s, cy - s, nullptr);
-                LineTo(dis->hDC, cx - s, cy + s);
-
-                SelectObject(dis->hDC, oldBrush);
+                SelectObject(dis->hDC, GetStockObject(NULL_BRUSH));
+                Rectangle(dis->hDC, r.left, r.top, r.right, r.bottom);
                 SelectObject(dis->hDC, oldPen);
                 DeleteObject(pen);
+                SetBkMode(dis->hDC, TRANSPARENT);
+                SetTextColor(dis->hDC, RGB(245, 245, 245));
+                wchar_t text[256] = {};
+                GetWindowTextW(dis->hwndItem, text, 256);
+                HFONT font = st->font ? st->font : (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+                HGDIOBJ oldFont = SelectObject(dis->hDC, font);
+                DrawTextW(dis->hDC, text, -1, &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+                SelectObject(dis->hDC, oldFont);
                 return TRUE;
             }
             break;
@@ -251,7 +247,8 @@ namespace ServiceEditDialog {
             label(L"Путь:", y);
             st->hPath = edit(st->cfg.binaryPath, y);
             HWND hBrowse = CreateWindowExW(0, L"BUTTON", L"...",
-                WS_CHILD | WS_VISIBLE | WS_TABSTOP, editX + editW + 4, y, 34, editH,
+                WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON | BS_OWNERDRAW,
+                editX + editW + 4, y, 34, editH,
                 hWnd, (HMENU)101, hInst, nullptr);
             SendMessageW(hBrowse, WM_SETFONT, (WPARAM)font, TRUE);
             y += editH + gap;
@@ -312,15 +309,15 @@ namespace ServiceEditDialog {
             GetClientRect(hWnd, &clientRect);
             int buttonsX = clientRect.right - 10 - 190;
             HWND hOk = CreateWindowExW(0, L"BUTTON", st->isCreate ? L"Создать" : L"Сохранить",
-                WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
+                WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON | BS_OWNERDRAW,
                 buttonsX, y, 90, 30, hWnd, (HMENU)1, hInst, nullptr);
-            SendMessageW(hOk, WM_SETFONT, (WPARAM)font, TRUE);
+
             HWND hCancel = CreateWindowExW(0, L"BUTTON", L"Отмена",
-                WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+                WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON | BS_OWNERDRAW,
                 buttonsX + 95, y, 90, 30, hWnd, (HMENU)2, hInst, nullptr);
             SendMessageW(hCancel, WM_SETFONT, (WPARAM)font, TRUE);
 
-            SetFocus(st->hDisplayName);
+            // SetFocus(st->hDisplayName);
             return 0;
         }
 
@@ -428,6 +425,8 @@ namespace ServiceEditDialog {
         UpdateWindow(hWnd);
         EnableWindow(parent, FALSE);
         SetForegroundWindow(hWnd);
+
+        if (state.hDisplayName) SetFocus(state.hDisplayName);
 
         MSG msg{};
         while (!state.done) {

@@ -14,7 +14,6 @@ void DrawUnlockContent(Graphics& g, const RectF& contentArea, Font& contentFont)
 bool OnUnlockClick(int x, int y, const RectF& contentArea);
 void RunFullRecovery(bool diagnosticOnly = false);
 void RunWinPeFullDiagnosis();
-void RunWinPeFullDiagnosis();
 void RunWinPeScan();
 void RunWinPeUnlockPolicies();
 void RunWinPeFullRepair();
