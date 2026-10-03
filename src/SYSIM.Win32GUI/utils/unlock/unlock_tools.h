@@ -16,8 +16,8 @@ namespace UnlockTools {
         std::vector<HKEY> hives;
         std::wstring subKey;
         std::wstring valueName;
-        DWORD disableValue;
-        bool deleteInsteadOfSet;
+        DWORD disableValue = 0;
+        bool deleteInsteadOfSet = false;
     };
 
     std::wstring GetBestUnlockReport(bool unlock, bool repairUserProfiles = true,
@@ -33,8 +33,8 @@ namespace UnlockTools {
         bool repairSystemServices = true);
     bool RepairOfflineSystemFiles(const std::wstring& scratchDirectory, std::wstring& log);
     bool RepairOfflineLogonFiles(std::wstring& log);
-    bool ClearOfflineIFEO();
-    bool ClearOfflineDisallowRun();
+    bool ClearOfflineIFEO(std::wstring& log);
+    bool ClearOfflineDisallowRun(std::wstring& log);
     std::wstring GetIfeoDebuggerReport(bool removeEntries);
 
     // BCD safeboot (bcdedit)
@@ -59,7 +59,10 @@ namespace UnlockTools {
     void UnlockPolicyLocks();
 
     // NTFS-права (ACL)
-    struct AclProbe { std::wstring path; bool writable; };
+    struct AclProbe {
+        std::wstring path;
+        bool writable = false;
+    };
     std::vector<AclProbe> ProbeCriticalPaths();
     bool ResetAclOnPath(const std::wstring& path,
         bool recursive,
@@ -85,4 +88,17 @@ namespace UnlockTools {
     void SetOfflineDriveHint(const std::wstring& driveRoot);
     std::wstring GetOfflineDriveHint();
     bool IsRecoveryEnvironment();
+
+    void NotifySystemChanges(bool associationsChanged, bool policiesChanged,
+        bool hostsChanged, bool srpChanged);
+    void RestartExplorer();
+    namespace detail {
+        bool CleanIFEOAt(HKEY root, const std::wstring& ifeoSubKey,
+            std::vector<std::wstring>& affectedProcesses);
+    }
+
+    inline bool CleanIFEOAt(HKEY root, const std::wstring& ifeoSubKey,
+        std::vector<std::wstring>& affectedProcesses) {
+        return detail::CleanIFEOAt(root, ifeoSubKey, affectedProcesses);
+    }
 }

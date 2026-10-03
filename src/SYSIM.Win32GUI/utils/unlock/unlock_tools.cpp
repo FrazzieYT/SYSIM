@@ -1,12 +1,20 @@
 ﻿#include "unlock_tools.h"
 #include <string>
 #include <vector>
+#include <shlobj.h>
+#include <wininet.h>
 #include <algorithm>
+#include <tlhelp32.h>
 
+#pragma comment(lib, "wininet.lib")
 #pragma comment(lib, "advapi32.lib")
 static std::wstring g_offlineDriveHint;
 namespace UnlockTools {
     namespace detail {
+        bool CleanIFEOAt(HKEY root, const std::wstring& ifeoSubKey) {
+            std::vector<std::wstring> dummy;
+            return CleanIFEOAt(root, ifeoSubKey, dummy);
+        }
         bool EnablePrivilege(const wchar_t* privilegeName) {
             HANDLE hToken = nullptr;
             if (!OpenProcessToken(GetCurrentProcess(),
@@ -240,10 +248,10 @@ namespace UnlockTools {
             if (RegOpenKeyExW(hExplorer, L"DisallowRun", 0, KEY_SET_VALUE | KEY_QUERY_VALUE,
                 &hDisallowRun) == ERROR_SUCCESS) {
                 for (;;) {
-                    wchar_t valueName[16384]{}; DWORD valueNameLen = 16384;
-                    if (RegEnumValueW(hDisallowRun, 0, valueName, &valueNameLen,
-                        nullptr, nullptr, nullptr, nullptr) != ERROR_SUCCESS) break;
-                    RegDeleteValueW(hDisallowRun, valueName);
+                    std::vector<wchar_t> valueName(16384);
+                    DWORD valueNameLen = 16384;
+                    if (RegEnumValueW(hDisallowRun, 0, valueName.data(), &valueNameLen, nullptr, nullptr, nullptr, nullptr) != ERROR_SUCCESS) break;
+                    RegDeleteValueW(hDisallowRun, valueName.data());
                 }
                 RegCloseKey(hDisallowRun);
                 RegDeleteKeyW(hExplorer, L"DisallowRun");
@@ -252,35 +260,42 @@ namespace UnlockTools {
             return true;
         }
 
-        bool CleanIFEOAt(HKEY root, const std::wstring& ifeoSubKey) {
+        bool CleanIFEOAt(HKEY root, const std::wstring& ifeoSubKey,
+            std::vector<std::wstring>& affectedProcesses) {
+            affectedProcesses.clear();
             HKEY hIFEO = nullptr;
-            LONG status = OpenOnlineKey(root, ifeoSubKey, KEY_ENUMERATE_SUB_KEYS | KEY_SET_VALUE | KEY_READ, &hIFEO);
+            LONG status = OpenOnlineKey(root, ifeoSubKey,
+                KEY_ENUMERATE_SUB_KEYS | KEY_SET_VALUE | KEY_READ, &hIFEO);
             if (status != ERROR_SUCCESS) return status == ERROR_FILE_NOT_FOUND;
 
             bool ok = true;
             for (DWORD index = 0;; ++index) {
                 std::vector<wchar_t> subKeyName(4096, L'\0');
                 DWORD subKeyNameLen = static_cast<DWORD>(subKeyName.size() - 1);
-                LONG enumStatus = RegEnumKeyExW(hIFEO, index, subKeyName.data(), &subKeyNameLen,
-                    nullptr, nullptr, nullptr, nullptr);
+                LONG enumStatus = RegEnumKeyExW(hIFEO, index, subKeyName.data(),
+                    &subKeyNameLen, nullptr, nullptr, nullptr, nullptr);
                 if (enumStatus == ERROR_NO_MORE_ITEMS) break;
                 if (enumStatus != ERROR_SUCCESS) {
-                    if (enumStatus == ERROR_MORE_DATA) {
-                        continue;
-                    }
-                    ok = false;
-                    break;
+                    if (enumStatus == ERROR_MORE_DATA) continue;
+                    ok = false; break;
                 }
                 if (subKeyNameLen == 0) continue;
 
                 std::wstring subKeyNameStr(subKeyName.data(), subKeyNameLen);
-                if (subKeyNameStr.empty()) continue;
-
                 HKEY hSub = nullptr;
-                if (RegOpenKeyExW(hIFEO, subKeyNameStr.c_str(), 0, KEY_SET_VALUE | KEY_READ, &hSub) == ERROR_SUCCESS) {
-                    LONG deleteStatus = RegDeleteValueW(hSub, L"Debugger");
-                    if (deleteStatus != ERROR_SUCCESS && deleteStatus != ERROR_FILE_NOT_FOUND)
-                        ok = false;
+                if (RegOpenKeyExW(hIFEO, subKeyNameStr.c_str(), 0,
+                    KEY_SET_VALUE | KEY_READ, &hSub) == ERROR_SUCCESS) {
+
+                    DWORD type = 0, size = 0;
+                    if (RegQueryValueExW(hSub, L"Debugger", nullptr, &type, nullptr, &size)
+                        == ERROR_SUCCESS && size > 0) {
+
+                        affectedProcesses.push_back(subKeyNameStr);
+
+                        LONG deleteStatus = RegDeleteValueW(hSub, L"Debugger");
+                        if (deleteStatus != ERROR_SUCCESS && deleteStatus != ERROR_FILE_NOT_FOUND)
+                            ok = false;
+                    }
                     RegCloseKey(hSub);
                 }
             }
@@ -303,15 +318,14 @@ namespace UnlockTools {
             }
 
             for (DWORD index = 0;; ++index) {
-                wchar_t name[4096]{};
-                DWORD nameLength = static_cast<DWORD>(_countof(name) - 1);
-                status = RegEnumKeyExW(hIFEO, index, name, &nameLength,
-                    nullptr, nullptr, nullptr, nullptr);
+                std::vector<wchar_t> name(4096);
+                DWORD nameLength = static_cast<DWORD>(name.size() - 1);
+                status = RegEnumKeyExW(hIFEO, index, name.data(), &nameLength, nullptr, nullptr, nullptr, nullptr);
                 if (status == ERROR_NO_MORE_ITEMS) break;
                 if (status != ERROR_SUCCESS) { ++failed; break; }
 
                 HKEY hTarget = nullptr;
-                status = RegOpenKeyExW(hIFEO, name, 0,
+                status = RegOpenKeyExW(hIFEO, name.data(), 0,
                     KEY_QUERY_VALUE | (removeEntries ? KEY_SET_VALUE : 0), &hTarget);
                 if (status != ERROR_SUCCESS) { ++failed; continue; }
 
@@ -325,7 +339,7 @@ namespace UnlockTools {
                     if (RegQueryValueExW(hTarget, L"Debugger", nullptr, &type,
                         reinterpret_cast<LPBYTE>(value.data()), &size) == ERROR_SUCCESS) {
                         ++found;
-                        report += std::wstring(L"IFEO: ") + name + L" -> " + value.data() + L"\r\n";
+                        report += std::wstring(L"IFEO: ") + name.data() + L" -> " + value.data() + L"\r\n";
                         if (removeEntries && RegDeleteValueW(hTarget, L"Debugger") != ERROR_SUCCESS) {
                             ++failed;
                             report += L"  Не удалось удалить значение Debugger.\r\n";
@@ -489,8 +503,9 @@ namespace UnlockTools {
             HANDLE h = CreateFileW(hostsPath.c_str(), GENERIC_READ,
                 FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
             if (h == INVALID_HANDLE_VALUE) return false;
-            char buf[65536]; DWORD rd = 0; std::string acc;
-            while (ReadFile(h, buf, sizeof(buf), &rd, nullptr) && rd > 0) acc.append(buf, rd);
+            std::vector<char> buf(65536);
+            DWORD rd = 0; std::string acc;
+            while (ReadFile(h, buf.data(), static_cast<DWORD>(buf.size()), &rd, nullptr) && rd > 0) acc.append(buf.data(), rd);
             CloseHandle(h);
             int wn = MultiByteToWideChar(CP_ACP, 0, acc.c_str(), (int)acc.size(), nullptr, 0);
             std::wstring text(wn > 0 ? wn : 0, 0);
@@ -914,8 +929,10 @@ namespace UnlockTools {
     }
 
     bool ClearImageFileExecutionOptions() {
+        std::vector<std::wstring> dummy;
         return detail::CleanIFEOAt(HKEY_LOCAL_MACHINE,
-            L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options");
+            L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options",
+            dummy);
     }
 
     // Offline
@@ -1109,16 +1126,25 @@ namespace UnlockTools {
         return success;
     }
 
-    bool ClearOfflineIFEO() {
+    bool ClearOfflineIFEO(std::wstring& log) {
         detail::EnableOfflinePrivileges();
         std::wstring winDrive = detail::FindOfflineWindowsDrive();
-        if (winDrive.empty()) return false;
+        if (winDrive.empty()) {
+            log += L"ClearOfflineIFEO: Офлайн-диск не найден.\r\n";
+            return false;
+        }
+        std::wstring softwarePath = winDrive + L"Windows\\System32\\config\\SOFTWARE";
         detail::OfflineHiveHandle softwareHive;
-        if (detail::LoadOfflineHive(winDrive + L"Windows\\System32\\config\\SOFTWARE",
-            KEY_ALL_ACCESS, softwareHive) != ERROR_SUCCESS) return false;
+        LONG status = detail::LoadOfflineHive(softwarePath, KEY_ALL_ACCESS, softwareHive);
+        if (status != ERROR_SUCCESS) {
+            log += L"ClearOfflineIFEO: Не удалось загрузить SOFTWARE hive (ошибка " +
+                std::to_wstring(status) + L").\r\n";
+            return false;
+        }
         HKEY hSoft = softwareHive.key;
         detail::CleanIFEOAt(hSoft, L"Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options");
-        RegFlushKey(hSoft); detail::CloseOfflineHive(softwareHive);
+        RegFlushKey(hSoft);
+        detail::CloseOfflineHive(softwareHive);
         return true;
     }
 
@@ -1160,9 +1186,13 @@ namespace UnlockTools {
         return report;
     }
 
-    bool ClearOfflineDisallowRun() {
+    bool ClearOfflineDisallowRun(std::wstring& log) {
         detail::EnableOfflinePrivileges();
         std::wstring winDrive = detail::FindOfflineWindowsDrive();
+        if (winDrive.empty()) {
+            log += L"ClearOfflineDisallowRun: Офлайн-диск не найден.\r\n";
+            return false;
+        }
         if (winDrive.empty()) return false;
         detail::OfflineHiveHandle softwareHive;
         if (detail::LoadOfflineHive(winDrive + L"Windows\\System32\\config\\SOFTWARE",
@@ -1430,14 +1460,14 @@ namespace UnlockTools {
 
         std::wstring cmdTakeown = L"cmd.exe /c takeown /f " + q + L" /a /d y";
         if (recursive) cmdTakeown += L" /r";
-        detail::RunCapture(cmdTakeown, log);
+        bool takeownOk = detail::RunCapture(cmdTakeown, log);
 
         std::wstring cmdIcacls = L"cmd.exe /c icacls " + q + L" /reset";
         if (recursive) cmdIcacls += L" /t";
         cmdIcacls += L" /c /q";
-        detail::RunCapture(cmdIcacls, log);
+        bool icaclsOk = detail::RunCapture(cmdIcacls, log);
 
-        return true;
+        return takeownOk && icaclsOk;
     }
 
     // Загрузка (boot)
@@ -1559,9 +1589,9 @@ namespace UnlockTools {
         if (!found) {
             HKEY hDisallowRun = nullptr;
             if (RegOpenKeyExW(hExplorer, L"DisallowRun", 0, KEY_READ, &hDisallowRun) == ERROR_SUCCESS) {
-                wchar_t valueName[16384]{}; DWORD valueNameLen = 16384;
-                if (RegEnumValueW(hDisallowRun, 0, valueName, &valueNameLen,
-                    nullptr, nullptr, nullptr, nullptr) == ERROR_SUCCESS) found = true;
+                std::vector<wchar_t> valueName(16384);
+                DWORD valueNameLen = 16384;
+                if (RegEnumValueW(hDisallowRun, 0, valueName.data(), &valueNameLen, nullptr, nullptr, nullptr, nullptr) == ERROR_SUCCESS) found = true;
                 RegCloseKey(hDisallowRun);
             }
         }
@@ -1647,6 +1677,97 @@ namespace UnlockTools {
 
     bool IsRecoveryEnvironment() {
         return detail::IsLikelyWinRE();
+    }
+
+    void NotifySystemChanges(bool associationsChanged, bool policiesChanged,
+        bool hostsChanged, bool srpChanged) {
+
+        if (associationsChanged) {
+            SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, nullptr, nullptr);
+        }
+
+        if (policiesChanged) {
+            DWORD_PTR result = 0;
+            SendMessageTimeoutW(HWND_BROADCAST, WM_SETTINGCHANGE, 0,
+                reinterpret_cast<LPARAM>(L"Policy"),
+                SMTO_ABORTIFHUNG | SMTO_NOTIMEOUTIFNOTHUNG, 4000, &result);
+        }
+
+        if (policiesChanged) {
+            HMODULE hWininet = LoadLibraryW(L"wininet.dll");
+            if (hWininet) {
+                using InternetSetOptionW_t = BOOL(WINAPI*)(HANDLE, DWORD, LPVOID, DWORD);
+                auto pInternetSetOption = reinterpret_cast<InternetSetOptionW_t>(
+                    GetProcAddress(hWininet, "InternetSetOptionW"));
+                if (pInternetSetOption) {
+                    pInternetSetOption(nullptr, INTERNET_OPTION_SETTINGS_CHANGED, nullptr, 0);
+                    pInternetSetOption(nullptr, INTERNET_OPTION_REFRESH, nullptr, 0);
+                }
+                FreeLibrary(hWininet);
+            }
+        }
+        
+        if (hostsChanged) {
+            STARTUPINFOW si{}; si.cb = sizeof(si); si.wShowWindow = SW_HIDE;
+            si.dwFlags = STARTF_USESHOWWINDOW;
+            PROCESS_INFORMATION pi{};
+            std::wstring cmd = L"cmd.exe /c ipconfig /flushdns";
+            CreateProcessW(nullptr, &cmd[0], nullptr, nullptr, FALSE,
+                CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi);
+            WaitForSingleObject(pi.hProcess, 3000);
+            CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
+        }
+
+        if (srpChanged) {
+            STARTUPINFOW si{}; si.cb = sizeof(si); si.wShowWindow = SW_HIDE;
+            si.dwFlags = STARTF_USESHOWWINDOW;
+            PROCESS_INFORMATION pi{};
+            std::wstring cmd = L"cmd.exe /c gpupdate /force";
+            CreateProcessW(nullptr, &cmd[0], nullptr, nullptr, FALSE,
+                CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi);
+            WaitForSingleObject(pi.hProcess, 30000);
+            CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
+        }
+    }
+
+    void RestartExplorer() {
+        HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if (hSnap == INVALID_HANDLE_VALUE) return;
+
+        PROCESSENTRY32W pe{}; pe.dwSize = sizeof(pe);
+        std::vector<DWORD> explorerPids;
+        if (Process32FirstW(hSnap, &pe)) {
+            do {
+                if (_wcsicmp(pe.szExeFile, L"explorer.exe") == 0) {
+                    explorerPids.push_back(pe.th32ProcessID);
+                }
+            } while (Process32NextW(hSnap, &pe));
+        }
+        CloseHandle(hSnap);
+
+        HANDLE hToken = nullptr;
+        if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken)) {
+            LUID luid{};
+            if (LookupPrivilegeValueW(nullptr, SE_DEBUG_NAME, &luid)) {
+                TOKEN_PRIVILEGES tp{};
+                tp.PrivilegeCount = 1;
+                tp.Privileges[0].Luid = luid;
+                tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+                AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof(tp), nullptr, nullptr);
+            }
+            CloseHandle(hToken);
+        }
+
+        for (DWORD pid : explorerPids) {
+            HANDLE hProc = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+            if (hProc) {
+                TerminateProcess(hProc, 0);
+                CloseHandle(hProc);
+            }
+        }
+
+        Sleep(500);
+        ShellExecuteW(nullptr, L"open", L"explorer.exe", nullptr, nullptr, SW_SHOWNORMAL);
     }
 
 }

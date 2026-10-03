@@ -1831,10 +1831,10 @@ static std::wstring PerformUnlock(bool immediate, bool fixBcd, bool fixAcl, bool
                 ++failedCount;
             }
         }
-
+        /*
         const auto offlineDrives = UnlockTools::ScanDrivesWithWindows();
         if (!offlineDrives.empty()) {
-            if (UnlockTools::ClearOfflineIFEO()) {
+            if (UnlockTools::ClearOfflineIFEO(log)) {
                 log += L"Разблокировано: IFEO FULL (offline Windows)\r\n";
                 ++unlockedCount;
             }
@@ -1842,7 +1842,7 @@ static std::wstring PerformUnlock(bool immediate, bool fixBcd, bool fixAcl, bool
                 log += L"Ошибка: не удалось очистить IFEO FULL (offline Windows)\r\n";
                 ++failedCount;
             }
-        }
+        }*/
     }
 
     if (fixBcd && immediate) {
@@ -1894,6 +1894,11 @@ static std::wstring PerformUnlock(bool immediate, bool fixBcd, bool fixAcl, bool
     }
 
     if (immediate) {
+        UnlockTools::NotifySystemChanges(true, true, true, true);
+
+        UnlockTools::RestartExplorer();
+        log += L"Explorer перезапущен для применения изменений UI.\r\n";
+
         std::wstring header;
         header += L"Разблокировано: " + std::to_wstring(unlockedCount) + L"\r\n";
         header += L"Ошибок: " + std::to_wstring(failedCount) + L"\r\n\r\n";
@@ -2009,15 +2014,10 @@ static void StartWinPeOperation(bool repairLogonFiles, bool repairSystemFiles) {
         L"\r\n\r\nБудет изменена только выбранная Windows. X: не затрагивается. Продолжить?").c_str(),
         L"WINPE-RE", MB_YESNO | MB_ICONWARNING) != IDYES) return;
 
-    auto* task = new (std::nothrow) UnlockTask{
-        !repairLogonFiles, false, false, false, false, hwnd, false,
-        repairLogonFiles, true, repairSystemFiles
+    auto* task = new UnlockTask{
+    !repairLogonFiles, false, false, false, false, hwnd, false,
+    repairLogonFiles, true, repairSystemFiles
     };
-    if (!task) {
-        MessageBoxW(hwnd, L"Недостаточно памяти для запуска WINPE-RE.",
-            L"WINPE-RE", MB_OK | MB_ICONERROR);
-        return;
-    }
 
     g_unlockInProgress = true;
     g_lastReport = repairLogonFiles
@@ -2056,11 +2056,7 @@ static void StartUnlockScan() {
     HWND hwnd = App::Instance() ? App::Instance()->GetHWND() : nullptr;
     if (!hwnd) return;
 
-    auto* task = new (std::nothrow) UnlockTask{};
-    if (!task) {
-        g_lastReport = L"Недостаточно памяти для запуска сканирования.\r\n";
-        return;
-    }
+    auto* task = new UnlockTask{};
     task->hwnd = hwnd;
     task->scanOnly = true;
     g_unlockInProgress = true;
@@ -2096,8 +2092,7 @@ void RunWinPeScan() {
         return;
     }
 
-    auto* task = new (std::nothrow) UnlockTask{};
-    if (!task) return;
+    auto* task = new UnlockTask{};
     task->hwnd = hwnd;
     task->scanOnly = true;
     task->showCompletionDialog = true;
